@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Users {
+  id               String             @id @default(uuid())
+  name             String
+  email            String             @unique
+  password         String
+  phone            String?            @unique
+  profileImage     String?
+  address          String?
+  city             String?
+  role             UserRole           @default(CUSTOMER)
+  status           UserStatus         @default(ACTIVE)
+  isVerified       Boolean            @default(false)
+  technician       TechnicianProfile?
+  customerBookings Booking[]          @relation("CustomerBookings")
+  reviews          Review[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now()) @updatedAt
+}
+
+model TechnicianProfile {
+  id            String        @id @default(uuid())
+  bio           String?
+  experience    Int?
+  hourlyRate    Decimal?      @db.Decimal(10, 2)
+  skills        String?
+  availability  Boolean       @default(true)
+  nationalId    String?
+  certification String?
+  averageRating Float         @default(0)
+  totalReviews  Int           @default(0)
+  completedJobs Int           @default(0)
+  services      Service[]
+  bookings      Booking[]
+  reviews       Review[]
+  Aavailability Availability?
+  userId        String        @unique
+  user          Users         @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now()) @updatedAt
+}
+
+model Availability {
+  id            String            @id @default(uuid())
+  technicianId  String            @unique
+  technician    TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  availableDays String[]
+  startTime     String
+  endTime       String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  icon        String?
+  services    Service[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+}
+
+model Service {
+  id           String            @id @default(uuid())
+  title        String
+  description  String?
+  price        Decimal           @db.Decimal(10, 2)
+  duration     Int // Minutes
+  serviceArea  String?
+  isAvailable  Boolean           @default(true)
+  bookings     Booking[]
+  technicianId String
+  technician   TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  categoryId   String
+  category     Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @default(now()) @updatedAt
+}
+
+model Booking {
+  id              String            @id @default(uuid())
+  bookingDate     DateTime
+  customerAddress String
+  note            String?
+  totalAmount     Decimal           @db.Decimal(10, 2)
+  status          BookingStatus     @default(PENDING)
+  payments        Payment[]
+  review          Review?
+  customerId      String
+  customer        Users             @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  technicianId    String
+  technician      TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  serviceId       String
+  service         Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+}
+
+model Payment {
+  id            String          @id @default(uuid())
+  bookingId     String          @unique
+  booking       Booking         @relation(fields: [bookingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  transactionId String?         @unique
+  amount        Decimal         @db.Decimal(10, 2)
+  provider      PaymentProvider @default(STRIPE)
+  method        PaymentMethod   @default(CARD)
+  status        PaymentStatus   @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Review {
+  id           String            @id @default(uuid())
+  rating       Int
+  comment      String?
+  bookingId    String            @unique
+  booking      Booking           @relation(fields: [bookingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  customerId   String
+  customer     Users             @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  technicianId String
+  technician   TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @default(now()) @updatedAt
+}
+
+enum UserRole {
+  CUSTOMER
+  TECHNICIAN
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  STRIPE
+}
+
+enum PaymentMethod {
+  CARD
+  MOBILE_BANKING
+  BANK
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
