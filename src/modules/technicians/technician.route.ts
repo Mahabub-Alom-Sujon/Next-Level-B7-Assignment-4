@@ -11,5 +11,5 @@ router.get("/bookings", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianCont
 router.get("/:id", TechnicianController.getSingleTechnician);
 router.patch("/bookings/:id", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.updateBookingStatus);
 router.put("/profile", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.updateProfile);
-router.put("/availability", auth(UserRole.TECHNICIAN), TechnicianController.updateAvailability);
+router.put("/availability", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.updateAvailability);
 export const technicianRoutes = router;

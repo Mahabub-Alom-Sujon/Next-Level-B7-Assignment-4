@@ -27,6 +27,7 @@ app.use(
     "/api/payments/webhook",
     express.raw({ type: "application/json" })
 );
+//app.use("/api/payments", PaymentRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -45,6 +46,21 @@ app.use("/api/categories", CategoryRoutes);
 app.use("/api/technicians", technicianRoutes)
 app.use("/api/reviews", ReviewRoutes);
 app.use("/api/admin", adminRoutes)
+
+app.get("/payment/success", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Payment completed successfully.",
+        sessionId: req.query.session_id,
+    });
+});
+
+app.get("/payment/cancel", (req, res) => {
+    res.status(200).json({
+        success: false,
+        message: "Payment was cancelled.",
+    });
+});
 
 // 2. ⚠️ THE NOT FOUND MIDDLEWARE (Catches anything that didn't match above)
 app.use(notFoundHandler);

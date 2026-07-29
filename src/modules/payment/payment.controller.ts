@@ -17,32 +17,27 @@ const createPayment = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const confirmPayment = catchAsync(async (req, res) => {
-    const { sessionId } = req.body;
-
-    if (!sessionId) {
-        throw new Error("paymentIntentId is required");
+// const confirmPayment = catchAsync(async (req, res) => {
+//     const { sessionId } = req.body;
+//
+//     if (!sessionId) {
+//         throw new Error("paymentIntentId is required");
+//     }
+//
+//     const result = await PaymentService.confirmPayment(sessionId);
+//
+//     sendResponse(res, {
+//         success: true,
+//         statusCode: 200,
+//         message: "Payment confirmed successfully",
+//         data: result,
+//     });
+// });
+const handleWebhook = catchAsync(async (req: Request, res: Response) => {
+    const signature = req.headers["stripe-signature"];
+    if (!signature || typeof signature !== "string") {
+        throw new Error("Missing Stripe-Signature header");
     }
-
-    const result = await PaymentService.confirmPayment(sessionId);
-
-    sendResponse(res, {
-        success: true,
-        statusCode: 200,
-        message: "Payment confirmed successfully",
-        data: result,
-    });
-});
-const handleWebhook = catchAsync(async (req, res) => {
-    const signature = req.headers["stripe-signature"] as string;
-
-    if (!signature) {
-        return res.status(400).json({
-            success: false,
-            message: "Missing Stripe-Signature header",
-        });
-    }
-
     const result = await PaymentService.handleWebhook(
         signature,
         req.body as Buffer
@@ -88,7 +83,7 @@ const getPayment = catchAsync(async (req, res) => {
 export const PaymentController = {
     createPayment,
     handleWebhook,
-    confirmPayment,
+    //confirmPayment,
     getPayments,
     getPayment,
 };

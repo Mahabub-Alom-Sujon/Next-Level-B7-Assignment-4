@@ -21,9 +21,12 @@ model Users {
   profileImage     String?
   address          String?
   city             String?
+  district         String?
+  postalCode       String?
   role             UserRole           @default(CUSTOMER)
   status           UserStatus         @default(ACTIVE)
   isVerified       Boolean            @default(false)
+  isActive         Boolean            @default(true)
   technician       TechnicianProfile?
   customerBookings Booking[]          @relation("CustomerBookings")
   reviews          Review[]
@@ -32,36 +35,25 @@ model Users {
 }
 
 model TechnicianProfile {
-  id            String        @id @default(uuid())
-  bio           String?
-  experience    Int?
-  hourlyRate    Decimal?      @db.Decimal(10, 2)
-  skills        String?
-  availability  Boolean       @default(true)
-  nationalId    String?
-  certification String?
-  averageRating Float         @default(0)
-  totalReviews  Int           @default(0)
-  completedJobs Int           @default(0)
-  services      Service[]
-  bookings      Booking[]
-  reviews       Review[]
-  Aavailability Availability?
-  userId        String        @unique
-  user          Users         @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @default(now()) @updatedAt
-}
-
-model Availability {
-  id            String            @id @default(uuid())
-  technicianId  String            @unique
-  technician    TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
-  availableDays String[]
-  startTime     String
-  endTime       String
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  id              String    @id @default(uuid())
+  bio             String?
+  experienceYears Int       @default(0)
+  hourlyRate      Decimal?  @db.Decimal(10, 2)
+  skills          String?
+  nationalId      String?
+  certification   String?
+  averageRating   Float     @default(0)
+  totalReviews    Int       @default(0)
+  completedJobs   Int       @default(0)
+  availability    Boolean   @default(true)
+  isAvailable     Boolean   @default(true)
+  services        Service[]
+  bookings        Booking[]
+  reviews         Review[]
+  userId          String    @unique
+  user            Users     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
 }
 
 model Category {
@@ -92,22 +84,22 @@ model Service {
 }
 
 model Booking {
-  id              String            @id @default(uuid())
-  bookingDate     DateTime
-  customerAddress String
-  note            String?
-  totalAmount     Decimal           @db.Decimal(10, 2)
-  status          BookingStatus     @default(PENDING)
-  payments        Payment[]
-  review          Review?
-  customerId      String
-  customer        Users             @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  technicianId    String
-  technician      TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  serviceId       String
-  service         Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @default(now()) @updatedAt
+  id           String            @id @default(uuid())
+  bookingDate  DateTime
+  bookingTime  String
+  note         String?
+  totalAmount  Decimal           @db.Decimal(10, 2)
+  status       BookingStatus     @default(PENDING)
+  payments     Payment[]
+  review       Review?
+  customerId   String
+  customer     Users             @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  technicianId String
+  technician   TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  serviceId    String
+  service      Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @default(now()) @updatedAt
 }
 
 model Payment {
