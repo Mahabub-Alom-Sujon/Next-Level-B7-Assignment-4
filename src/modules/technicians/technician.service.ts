@@ -3,8 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { Prisma } from "../../../generated/prisma";
 import { TechnicianProfileWhereInput} from "../../../generated/prisma/models";
 
-import {CreateTechnician, UpdateAvailabilityPayload, UpdateTechnician} from "./technician.interface";
-import { TechnicianQuery } from "./technician.interface";
+import {CreateTechnician, UpdateTechnician,ITechnicianQuery} from "./technician.interface";
 import {UpdateBookingStatus} from "./technician.interface";
 const createTechnician = async ( userId: string, payload: CreateTechnician ) => {
     // User exists কিনা
@@ -35,75 +34,150 @@ const createTechnician = async ( userId: string, payload: CreateTechnician ) => 
     return result;
 };
 
-const getAllTechnicians = async (query: TechnicianQuery) => {
-    const where: Prisma.TechnicianProfileWhereInput = {};
 
-    // Filter by service area (location)
-    if (query.location) {
-        where.services = {
-            some: {
-                serviceArea: {
-                    contains: query.location,
-                    mode: "insensitive",
-                },
-            },
-        };
+const updateAvailability = async (
+    technicianId: string,
+    payload: {
+        isAvailable?: boolean;
+        availableDays?: string[];
+        availableFrom?: string;
+        availableTo?: string;
     }
-
-    // Filter by average rating
-    if (query.rating) {
-        where.averageRating = {
-            gte: Number(query.rating),
-        };
-    }
-
-    const result = await prisma.technicianProfile.findMany({
-        where,
-        include: {
-            services: {
-                include: {
-                    category: true,
-                },
-            },
-            bookings: true,
+) => {
+    const technician = await prisma.technicianProfile.findUniqueOrThrow({
+        where: {
+            id: technicianId,
         },
-        orderBy: {
-            createdAt: "desc",
+    });
+
+    // if (!technician) {
+    //     throw new AppError(httpStatus.NOT_FOUND, "Technician not found");
+    // }
+
+    const result = await prisma.technicianProfile.update({
+        where: {
+            id: technicianId,
+        },
+        data: {
+            isAvailable: payload.isAvailable,
+            availableDays: payload.availableDays,
+            availableFrom: payload.availableFrom,
+            availableTo: payload.availableTo,
         },
     });
 
     return result;
 };
 
-const updateAvailability = async (
-    userId: string,
-    payload: UpdateAvailabilityPayload
-) => {
-    // Find technician
-    const technician = await prisma.technicianProfile.findUniqueOrThrow({
-        where: {
-            userId,
+const getAllTechnicians = async (query: ITechnicianQuery) => {
+    const {
+        searchTerm,
+        location,
+        category,
+        experience,
+        page = "1",
+        limit = "10",
+        sortBy = "createdAt",
+        sortOrder = "desc",
+    } = query;
+
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const andConditions: Prisma.TechnicianProfileWhereInput[] = [];
+
+    // Search by technician name or bio
+    if (searchTerm) {
+        andConditions.push({
+            OR: [
+                {
+                    user: {
+                        name: {
+                            contains: searchTerm,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+                {
+                    bio: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                },
+            ],
+        });
+    }
+
+    // Filter by city
+    if (location) {
+        andConditions.push({
+            user: {
+                city: {
+                    equals: location,
+                    mode: "insensitive",
+                },
+            },
+        });
+    }
+
+    // Filter by minimum experience
+    if (experience) {
+        andConditions.push({
+            experience: {
+                gte: Number(experience),
+            },
+        });
+    }
+
+    // Filter by service category
+    if (category) {
+        andConditions.push({
+            services: {
+                some: {
+                    category: {
+                        name: {
+                            equals: category,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    const where: Prisma.TechnicianProfileWhereInput =
+        andConditions.length ? { AND: andConditions } : {};
+
+    const technicians = await prisma.technicianProfile.findMany({
+        where,
+        skip,
+        take: limitNumber,
+        orderBy: {
+            [sortBy]: sortOrder as Prisma.SortOrder,
+        },
+        include: {
+            user: true,
+            services: {
+                include: {
+                    category: true,
+                },
+            },
         },
     });
 
-    const result = await prisma.availability.upsert({
-        where: {
-            technicianId: technician.id,
-        },
-        update: {
-            availableDays: payload.availableDays,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-        },
-        create: {
-            technicianId: technician.id,
-            availableDays: payload.availableDays,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-        },
+    const total = await prisma.technicianProfile.count({
+        where,
     });
 
-    return result;
+    return {
+        meta: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+        },
+        data: technicians,
+    };
 };
 
 const getSingleTechnician = async (id: string) => {

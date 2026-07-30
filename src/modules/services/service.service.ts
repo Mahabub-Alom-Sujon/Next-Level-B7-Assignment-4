@@ -1,7 +1,9 @@
 import { prisma } from "../../lib/prisma";
 import { CreateServicePayload } from "./service.interface";
+import {IServiceQuery } from "./service.interface"
 // @ts-ignore
 import { Prisma } from "../../../generated/prisma";
+import {Query} from "pg";
 const createService = async (payload: CreateServicePayload) => {
     // Check technician
     await prisma.technicianProfile.findUniqueOrThrow({
@@ -33,35 +35,95 @@ const createService = async (payload: CreateServicePayload) => {
 //     });
 // };
 
-const getAllServices = async (query: any) => {
-    const where: Prisma.ServiceWhereInput = {};
+const getAllServices = async (query: IServiceQuery) => {
+    const {
+        type,
+        location,
+        rating,
+        searchTerm,
+        page = "1",
+        limit = "10",
+        sortBy = "createdAt",
+        sortOrder = "desc",
+    } = query;
 
-    if (query.type) {
-        where.category = {
-            name: {
-                contains: query.type,
-                mode: "insensitive",
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const andConditions: Prisma.ServiceWhereInput[] = [];
+
+    // Search
+    if (searchTerm) {
+        andConditions.push({
+            OR: [
+                {
+                    title: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    description: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                },
+            ],
+        });
+    }
+
+    // Category Filter
+    if (type) {
+        andConditions.push({
+            category: {
+                name: {
+                    equals: type,
+                    mode: "insensitive",
+                },
             },
-        };
+        });
     }
 
-    if (query.location) {
-        where.serviceArea = {
-            contains: query.location,
-            mode: "insensitive",
-        };
-    }
-
-    if (query.rating) {
-        where.technician = {
-            averageRating: {
-                gte: Number(query.rating),
+    // Location Filter
+    if (location) {
+        andConditions.push({
+            technician: {
+                user: {
+                    city: {
+                        equals: location,
+                        mode: "insensitive",
+                    },
+                },
             },
-        };
+        });
     }
 
-    return prisma.service.findMany({
-        where,
+    // Rating Filter
+    if (rating) {
+        andConditions.push({
+            bookings: {
+                some: {
+                    review: {
+                        rating: {
+                            gte: Number(rating),
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    const whereConditions: Prisma.ServiceWhereInput =
+        andConditions.length ? { AND: andConditions } : {};
+
+    const result = await prisma.service.findMany({
+        where: whereConditions,
+        skip,
+        take: limitNumber,
+        orderBy: {
+            [sortBy]: sortOrder as Prisma.SortOrder,
+        },
         include: {
             category: true,
             technician: {
@@ -69,15 +131,74 @@ const getAllServices = async (query: any) => {
                     user: true,
                 },
             },
-        },
-        orderBy: {
-            createdAt: "desc",
+            bookings: {
+                include: {
+                    review: true,
+                },
+            },
         },
     });
+
+    const total = await prisma.service.count({
+        where: whereConditions,
+    });
+
+    return {
+        meta: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+        },
+        data: result,
+    };
 };
+
+
+// const getAllServices = async (query: any) => {
+//     const where: Prisma.ServiceWhereInput = {};
+//
+//     if (query.type) {
+//         where.category = {
+//             name: {
+//                 contains: query.type,
+//                 mode: "insensitive",
+//             },
+//         };
+//     }
+//
+//     if (query.location) {
+//         where.serviceArea = {
+//             contains: query.location,
+//             mode: "insensitive",
+//         };
+//     }
+//
+//     if (query.rating) {
+//         where.technician = {
+//             averageRating: {
+//                 gte: Number(query.rating),
+//             },
+//         };
+//     }
+//
+//     return prisma.service.findMany({
+//         where,
+//         include: {
+//             category: true,
+//             technician: {
+//                 include: {
+//                     user: true,
+//                 },
+//             },
+//         },
+//         orderBy: {
+//             createdAt: "desc",
+//         },
+//     });
+// };
 
 export const ServiceServices = {
     createService,
     //getServices,
-    getAllServices,
+    getAllServices
 };

@@ -35,25 +35,25 @@ model Users {
 }
 
 model TechnicianProfile {
-  id              String    @id @default(uuid())
-  bio             String?
-  experienceYears Int       @default(0)
-  hourlyRate      Decimal?  @db.Decimal(10, 2)
-  skills          String?
-  nationalId      String?
-  certification   String?
-  averageRating   Float     @default(0)
-  totalReviews    Int       @default(0)
-  completedJobs   Int       @default(0)
-  availability    Boolean   @default(true)
-  isAvailable     Boolean   @default(true)
-  services        Service[]
-  bookings        Booking[]
-  reviews         Review[]
-  userId          String    @unique
-  user            Users     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now()) @updatedAt
+  id            String    @id @default(uuid())
+  bio           String?
+  experience    Int       @default(0)
+  hourlyRate    Decimal?  @db.Decimal(10, 2)
+  skills        String?
+  nationalId    String?
+  certification String?
+  averageRating Float     @default(0)
+  totalReviews  Int       @default(0)
+  completedJobs Int       @default(0)
+  availability  Boolean   @default(true)
+  isAvailable   Boolean   @default(true)
+  services      Service[]
+  bookings      Booking[]
+  reviews       Review[]
+  userId        String    @unique
+  user          Users     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
 }
 
 model Category {
@@ -86,7 +86,7 @@ model Service {
 model Booking {
   id           String            @id @default(uuid())
   bookingDate  DateTime
-  bookingTime  String
+  bookingTime  String?
   note         String?
   totalAmount  Decimal           @db.Decimal(10, 2)
   status       BookingStatus     @default(PENDING)

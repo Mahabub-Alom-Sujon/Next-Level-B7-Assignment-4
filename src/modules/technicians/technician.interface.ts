@@ -20,14 +20,21 @@ export interface UpdateTechnician {
     certification?: string;
     // userId: string;
 }
-export interface UpdateAvailabilityPayload {
-    availableDays: string[];
-    startTime: string;
-    endTime: string;
-}
-export interface TechnicianQuery {
+export interface ITechnicianQuery {
+    searchTerm?: string;
     location?: string;
-    rating?: string;
+    category?: string;
+    experience?: string;
+    page?: string;
+    limit?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+}
+export interface IAvailabilityPayload {
+    isAvailable?: boolean;
+    availableDays?: string[];
+    availableFrom?: string;
+    availableTo?: string;
 }
 export interface UpdateBookingStatus {
     status: BookingStatus;

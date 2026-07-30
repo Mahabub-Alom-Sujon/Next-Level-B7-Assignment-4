@@ -34,19 +34,23 @@ const getAllTechnicians = catchAsync(async (req, res) => {
     });
 });
 
-const updateAvailability = catchAsync(async (req, res) => {
-    const result = await TechnicianService.updateAvailability(
-        req.users!.id,
-        req.body
-    );
+const updateAvailability = catchAsync(
+    async (req: Request, res: Response) => {
+        const id = req.users?.id as string;
 
-    sendResponse(res, {
-        success: true,
-        statusCode: 200,
-        message: "Availability updated successfully",
-        data: result,
-    });
-});
+        const result = await TechnicianService.updateAvailability(
+            id,
+            req.body
+        );
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Availability updated successfully",
+            data: result,
+        });
+    }
+);
 
 const getSingleTechnician = catchAsync(async (req, res) => {
     const result = await TechnicianService.getSingleTechnician(

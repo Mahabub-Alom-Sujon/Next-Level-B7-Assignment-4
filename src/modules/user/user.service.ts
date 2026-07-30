@@ -5,11 +5,21 @@ import {RegisterUserPayload} from "./user.interface";
 
 const registerUserIntoDB = async (payload: RegisterUserPayload) =>{
     const { name, email, password, phone, profileImage } = payload;
+    // Check if user already exists
     const isUserExist = await prisma.users.findUnique({
-        where: { email }
-    })
+        where: { email },
+    });
 
-    const hashedPassword = await bcrypt.hash(password, Number(config.bcrypt_salt_rounds))
+    if (isUserExist) {
+        throw new Error("User already exists");
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(
+        password,
+        Number(config.bcrypt_salt_rounds)
+    );
+
 
     const createdUser = await prisma.users.create({
         data: {

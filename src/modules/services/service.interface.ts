@@ -9,8 +9,13 @@ export interface CreateServicePayload {
     categoryId: string;
 }
 
-export interface ServiceQuery {
+export interface IServiceQuery {
     type?: string;
     location?: string;
-    minRating?: number;
+    rating?: string;
+    searchTerm?: string;
+    page?: string;
+    limit?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
 }
