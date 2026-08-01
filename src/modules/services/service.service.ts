@@ -142,12 +142,13 @@ const getAllServices = async (query: IServiceQuery) => {
     const total = await prisma.service.count({
         where: whereConditions,
     });
-
+    const totalPage = Math.ceil(total / limitNumber);
     return {
         meta: {
             page: pageNumber,
             limit: limitNumber,
             total,
+            totalPage,
         },
         data: result,
     };
