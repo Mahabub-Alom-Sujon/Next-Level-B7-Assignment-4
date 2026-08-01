@@ -14,16 +14,6 @@ const createService = catchAsync(async (req, res) => {
     });
 });
 
-// const getServices = catchAsync(async (req, res) => {
-//     const result = await ServiceServices.getServices();
-//
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: 200,
-//         message: "Services retrieved successfully",
-//         data: result,
-//     });
-// });
 const getAllServices = catchAsync(async (req, res) => {
     const result = await ServiceServices.getAllServices(req.query);
 

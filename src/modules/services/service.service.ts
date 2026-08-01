@@ -155,51 +155,7 @@ const getAllServices = async (query: IServiceQuery) => {
 };
 
 
-// const getAllServices = async (query: any) => {
-//     const where: Prisma.ServiceWhereInput = {};
-//
-//     if (query.type) {
-//         where.category = {
-//             name: {
-//                 contains: query.type,
-//                 mode: "insensitive",
-//             },
-//         };
-//     }
-//
-//     if (query.location) {
-//         where.serviceArea = {
-//             contains: query.location,
-//             mode: "insensitive",
-//         };
-//     }
-//
-//     if (query.rating) {
-//         where.technician = {
-//             averageRating: {
-//                 gte: Number(query.rating),
-//             },
-//         };
-//     }
-//
-//     return prisma.service.findMany({
-//         where,
-//         include: {
-//             category: true,
-//             technician: {
-//                 include: {
-//                     user: true,
-//                 },
-//             },
-//         },
-//         orderBy: {
-//             createdAt: "desc",
-//         },
-//     });
-// };
-
 export const ServiceServices = {
     createService,
-    //getServices,
     getAllServices
 };
