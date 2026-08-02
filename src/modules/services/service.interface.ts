@@ -14,6 +14,8 @@ export interface IServiceQuery {
     location?: string;
     rating?: string;
     searchTerm?: string;
+    minPrice?: string;
+    maxPrice?: string;
     page?: string;
     limit?: string;
     sortBy?: string;

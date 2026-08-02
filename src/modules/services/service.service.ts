@@ -41,6 +41,8 @@ const getAllServices = async (query: IServiceQuery) => {
         location,
         rating,
         searchTerm,
+        minPrice,
+        maxPrice,
         page = "1",
         limit = "10",
         sortBy = "createdAt",
@@ -88,15 +90,12 @@ const getAllServices = async (query: IServiceQuery) => {
     // Location Filter
     if (location) {
         andConditions.push({
-            technician: {
-                user: {
-                    city: {
-                        equals: location,
-                        mode: "insensitive",
-                    },
-                },
-            },
-        });
+            serviceArea:{
+                contains: location,
+                mode: "insensitive",
+            }
+        })
+
     }
 
     // Rating Filter
@@ -114,6 +113,15 @@ const getAllServices = async (query: IServiceQuery) => {
         });
     }
 
+    // Price Range Filter
+    if (minPrice || maxPrice) {
+        andConditions.push({
+            price: {
+                ...(minPrice && {gte: Number(minPrice)}),
+                ...(maxPrice && {lte: Number(maxPrice)}),
+            },
+        });
+    }
     const whereConditions: Prisma.ServiceWhereInput =
         andConditions.length ? { AND: andConditions } : {};
 
