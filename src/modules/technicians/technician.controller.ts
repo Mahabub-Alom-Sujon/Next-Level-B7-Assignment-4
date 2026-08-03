@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catch-async";
 import { sendResponse } from "../../utils/send-response";
 import { TechnicianService, } from "./technician.service";
+import {prisma} from "../../lib/prisma.ts";
 
 const createTechnician = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -37,6 +38,16 @@ const getAllTechnicians = catchAsync(async (req, res) => {
 const updateAvailability = catchAsync(
     async (req: Request, res: Response) => {
         const id = req.users?.id as string;
+
+        // const technician = await prisma.technicianProfile.findUnique({
+        //     where: {
+        //         userId,
+        //     },
+        // });
+        //
+        // if (!technician) {
+        //     throw new Error("Technician profile not found");
+        // }
 
         const result = await TechnicianService.updateAvailability(
             id,

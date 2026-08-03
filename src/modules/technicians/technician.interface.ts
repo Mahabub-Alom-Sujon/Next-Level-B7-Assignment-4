@@ -5,7 +5,7 @@ export interface CreateTechnician {
     experience:number;
     hourlyRate?: number;
     skills?: string;
-    availability?: boolean;
+    // availability?: boolean;
     nationalId?: string;
     certification?: string;
     // userId: string;
@@ -15,16 +15,28 @@ export interface UpdateTechnician {
     experience:number;
     hourlyRate?: number;
     skills?: string;
-    availability?: boolean;
+    // availability?: boolean;
     nationalId?: string;
     certification?: string;
     // userId: string;
+}
+export interface IAvailabilitySlot {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+}
+
+export interface IUpdateAvailability {
+    isAvailable: boolean;
+    slots: IAvailabilitySlot[];
 }
 export interface ITechnicianQuery {
     searchTerm?: string;
     location?: string;
     category?: string;
     experience?: string;
+    minRating?: string;
+    maxHourlyRate?:number;
     page?: string;
     limit?: string;
     sortBy?: string;

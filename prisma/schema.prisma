@@ -38,22 +38,36 @@ model TechnicianProfile {
   id            String    @id @default(uuid())
   bio           String?
   experience    Int       @default(0)
-  hourlyRate    Decimal?  @db.Decimal(10, 2)
+  hourlyRate    Int? // stored in smallest currency unit (e.g., 50000 = 500.00 BDT)
   skills        String?
   nationalId    String?
   certification String?
   averageRating Float     @default(0)
   totalReviews  Int       @default(0)
   completedJobs Int       @default(0)
-  availability  Boolean   @default(true)
   isAvailable   Boolean   @default(true)
   services      Service[]
   bookings      Booking[]
   reviews       Review[]
+  availability AvailabilitySlot[]
   userId        String    @unique
   user          Users     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
+}
+
+model AvailabilitySlot {
+  id String @id @default(cuid())
+  technicianId String
+  dayOfWeek    Int // 0 = Sunday ... 6 = Saturday
+  startTime    String // e.g. "09:00"
+  endTime      String // e.g. "17:00"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation
+  technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  @@unique([technicianId, dayOfWeek, startTime, endTime])
 }
 
 model Category {
@@ -70,7 +84,7 @@ model Service {
   id           String            @id @default(uuid())
   title        String
   description  String?
-  price        Decimal           @db.Decimal(10, 2)
+  price        Int // smallest currency unit (e.g., 150000 = 1,500.00 BDT)
   duration     Int // Minutes
   serviceArea  String?
   isAvailable  Boolean           @default(true)
@@ -89,9 +103,9 @@ model Booking {
   bookingDate  DateTime
   bookingTime  String?
   note         String?
-  totalAmount  Decimal           @db.Decimal(10, 2)
-  status       BookingStatus     @default(PENDING)
-  payments     Payment[]
+  // totalAmount  Decimal           @db.Decimal(10, 2)
+  status       BookingStatus     @default(REQUESTED)
+  payments     Payment?
   review       Review?
   customerId   String
   customer     Users             @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
@@ -144,8 +158,10 @@ enum UserStatus {
 }
 
 enum BookingStatus {
-  PENDING
+  REQUESTED
   ACCEPTED
+  DECLINED
+  PAID
   IN_PROGRESS
   COMPLETED
   CANCELLED

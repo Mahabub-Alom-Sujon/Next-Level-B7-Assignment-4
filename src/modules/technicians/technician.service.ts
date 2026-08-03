@@ -1,9 +1,10 @@
 import { prisma } from "../../lib/prisma";
 // @ts-ignore
-import { Prisma } from "../../../generated/prisma";
+import { Prisma } from "../../generated/prisma";
 import { TechnicianProfileWhereInput} from "../../../generated/prisma/models";
 
-import {CreateTechnician, UpdateTechnician,ITechnicianQuery} from "./technician.interface";
+import {CreateTechnician, UpdateTechnician, ITechnicianQuery} from "./technician.interface";
+import { IUpdateAvailability } from "./technician.interface";
 import {UpdateBookingStatus} from "./technician.interface";
 const createTechnician = async ( userId: string, payload: CreateTechnician ) => {
     // User exists কিনা
@@ -37,37 +38,61 @@ const createTechnician = async ( userId: string, payload: CreateTechnician ) => 
 
 const updateAvailability = async (
     technicianId: string,
-    payload: {
-        isAvailable?: boolean;
-        availableDays?: string[];
-        availableFrom?: string;
-        availableTo?: string;
-    }
+    payload: IUpdateAvailability
 ) => {
-    const technician = await prisma.technicianProfile.findUniqueOrThrow({
-        where: {
-            id: technicianId,
-        },
-    });
+    const { isAvailable, slots } = payload;
 
-    // if (!technician) {
-    //     throw new AppError(httpStatus.NOT_FOUND, "Technician not found");
-    // }
+    const result = await prisma.$transaction(async (tx) => {
+        await tx.technicianProfile.update({
+            where: {
+                id: technicianId,
+            },
+            data: {
+                isAvailable,
+            },
+        });
 
-    const result = await prisma.technicianProfile.update({
-        where: {
-            id: technicianId,
-        },
-        data: {
-            isAvailable: payload.isAvailable,
-            availableDays: payload.availableDays,
-            availableFrom: payload.availableFrom,
-            availableTo: payload.availableTo,
-        },
+        await tx.availabilitySlot.deleteMany({
+            where: {
+                technicianId,
+            },
+        });
+
+        if (slots.length > 0) {
+            await tx.availabilitySlot.createMany({
+                data: slots.map((slot) => ({
+                    technicianId,
+                    dayOfWeek: slot.dayOfWeek,
+                    startTime: slot.startTime,
+                    endTime: slot.endTime,
+                })),
+            });
+        }
+
+        return tx.technicianProfile.findUnique({
+            where: {
+                id: technicianId,
+            },
+            include: {
+                availability: {
+                    orderBy: [
+                        {
+                            dayOfWeek: "asc",
+                        },
+                        {
+                            startTime: "asc",
+                        },
+                    ],
+                },
+            },
+        });
     });
 
     return result;
 };
+
+// Filter By:
+// GET /api/technicians
 
 const getAllTechnicians = async (query: ITechnicianQuery) => {
     const {
@@ -75,6 +100,8 @@ const getAllTechnicians = async (query: ITechnicianQuery) => {
         location,
         category,
         experience,
+        minRating,
+        maxHourlyRate,
         page = "1",
         limit = "10",
         sortBy = "createdAt",
@@ -129,7 +156,23 @@ const getAllTechnicians = async (query: ITechnicianQuery) => {
             },
         });
     }
+    // Minimum Rating
+    if (minRating) {
+        andConditions.push({
+            averageRating: {
+                gte: Number(minRating),
+            },
+        });
+    }
 
+    // Filter by maximum hourly rate
+    if (maxHourlyRate) {
+        andConditions.push({
+            hourlyRate: {
+                lte: Number(maxHourlyRate),
+            },
+        });
+    }
     // Filter by service category
     if (category) {
         andConditions.push({
