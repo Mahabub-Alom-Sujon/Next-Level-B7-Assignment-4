@@ -44,7 +44,7 @@ const getAllServices = async (query: IServiceQuery) => {
         minPrice,
         maxPrice,
         page = "1",
-        limit = "10",
+        limit = "8",
         sortBy = "createdAt",
         sortOrder = "desc",
     } = query;
