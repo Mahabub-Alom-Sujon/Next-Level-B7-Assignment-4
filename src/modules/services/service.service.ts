@@ -141,13 +141,37 @@ const getAllServices = async (query: IServiceQuery) => {
     const whereConditions: Prisma.ServiceWhereInput =
         andConditions.length ? { AND: andConditions } : {};
 
+    let orderBy: Prisma.ServiceOrderByWithRelationInput;
+
+    switch (sortBy) {
+        case "price":
+            orderBy = {
+                price: sortOrder as Prisma.SortOrder,
+            };
+            break;
+
+        case "rating":
+            orderBy = {
+                technician: {
+                    averageRating: "desc",
+                },
+            };
+            break;
+
+        default:
+            orderBy = {
+                createdAt: sortOrder as Prisma.SortOrder,
+            };
+    }
+
     const result = await prisma.service.findMany({
         where: whereConditions,
         skip,
         take: limitNumber,
-        orderBy: {
-            [sortBy]: sortOrder as Prisma.SortOrder,
-        },
+        orderBy,
+        // orderBy: {
+        //     [sortBy]: sortOrder as Prisma.SortOrder,
+        // },
         include: {
             category: true,
             technician: {
