@@ -1366,7 +1366,7 @@ var createService = async (payload) => {
 };
 var getAllServices = async (query) => {
   const {
-    type,
+    category,
     location,
     rating,
     searchTerm,
@@ -1399,11 +1399,11 @@ var getAllServices = async (query) => {
       ]
     });
   }
-  if (type) {
+  if (category) {
     andConditions.push({
       category: {
         name: {
-          equals: type,
+          equals: category,
           mode: "insensitive"
         }
       }
@@ -1411,9 +1411,13 @@ var getAllServices = async (query) => {
   }
   if (location) {
     andConditions.push({
-      serviceArea: {
-        contains: location,
-        mode: "insensitive"
+      technician: {
+        user: {
+          city: {
+            equals: location,
+            mode: "insensitive"
+          }
+        }
       }
     });
   }
@@ -1422,8 +1426,10 @@ var getAllServices = async (query) => {
       bookings: {
         some: {
           review: {
-            rating: {
-              gte: Number(rating)
+            is: {
+              rating: {
+                equals: Number(rating)
+              }
             }
           }
         }
@@ -1458,6 +1464,20 @@ var getAllServices = async (query) => {
           review: true
         }
       }
+      // bookings: {
+      //     where: {
+      //         review: {
+      //             is: {
+      //                 rating: {
+      //                     gte: Number(rating || 0),
+      //                 },
+      //             },
+      //         },
+      //     },
+      //     include: {
+      //         review: true,
+      //     },
+      // },
     }
   });
   const total = await prisma.service.count({

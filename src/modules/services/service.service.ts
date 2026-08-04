@@ -37,7 +37,7 @@ const createService = async (payload: CreateServicePayload) => {
 
 const getAllServices = async (query: IServiceQuery) => {
     const {
-        type,
+        category,
         location,
         rating,
         searchTerm,
@@ -76,11 +76,11 @@ const getAllServices = async (query: IServiceQuery) => {
     }
 
     // Category Filter
-    if (type) {
+    if (category) {
         andConditions.push({
             category: {
                 name: {
-                    equals: type,
+                    equals: category,
                     mode: "insensitive",
                 },
             },
@@ -88,14 +88,28 @@ const getAllServices = async (query: IServiceQuery) => {
     }
 
     // Location Filter
+    // if (location) {
+    //     andConditions.push({
+    //         serviceArea:{
+    //             contains: location,
+    //             mode: "insensitive",
+    //         }
+    //     })
+    //
+    // }
+
+    // Filter by city
     if (location) {
         andConditions.push({
-            serviceArea:{
-                contains: location,
-                mode: "insensitive",
-            }
-        })
-
+            technician: {
+                user: {
+                    city: {
+                        equals: location,
+                        mode: "insensitive",
+                    },
+                },
+            },
+        });
     }
 
     // Rating Filter
@@ -104,8 +118,10 @@ const getAllServices = async (query: IServiceQuery) => {
             bookings: {
                 some: {
                     review: {
-                        rating: {
-                            gte: Number(rating),
+                        is: {
+                            rating: {
+                                equals: Number(rating),
+                            },
                         },
                     },
                 },
@@ -144,6 +160,20 @@ const getAllServices = async (query: IServiceQuery) => {
                     review: true,
                 },
             },
+            // bookings: {
+            //     where: {
+            //         review: {
+            //             is: {
+            //                 rating: {
+            //                     gte: Number(rating || 0),
+            //                 },
+            //             },
+            //         },
+            //     },
+            //     include: {
+            //         review: true,
+            //     },
+            // },
         },
     });
 

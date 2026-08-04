@@ -10,7 +10,7 @@ export interface CreateServicePayload {
 }
 
 export interface IServiceQuery {
-    type?: string;
+    category?: string;
     location?: string;
     rating?: string;
     searchTerm?: string;
