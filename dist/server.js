@@ -1445,13 +1445,33 @@ var getAllServices = async (query) => {
     });
   }
   const whereConditions = andConditions.length ? { AND: andConditions } : {};
+  let orderBy;
+  switch (sortBy) {
+    case "price":
+      orderBy = {
+        price: sortOrder
+      };
+      break;
+    case "rating":
+      orderBy = {
+        technician: {
+          averageRating: "desc"
+        }
+      };
+      break;
+    default:
+      orderBy = {
+        createdAt: sortOrder
+      };
+  }
   const result = await prisma.service.findMany({
     where: whereConditions,
     skip,
     take: limitNumber,
-    orderBy: {
-      [sortBy]: sortOrder
-    },
+    orderBy,
+    // orderBy: {
+    //     [sortBy]: sortOrder as Prisma.SortOrder,
+    // },
     include: {
       category: true,
       technician: {
