@@ -858,7 +858,12 @@ var getSingleTechnician = async (id) => {
           email: true,
           phone: true,
           profileImage: true,
-          address: true
+          address: true,
+          city: true,
+          district: true,
+          status: true,
+          isVerified: true,
+          isActive: true
         }
       },
       //services: true,

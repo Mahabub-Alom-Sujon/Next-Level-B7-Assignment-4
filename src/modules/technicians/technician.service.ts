@@ -237,6 +237,11 @@ const getSingleTechnician = async (id: string) => {
                     phone: true,
                     profileImage: true,
                     address: true,
+                    city:true,
+                    district:true,
+                    status:true,
+                    isVerified:true,
+                    isActive:true
                 },
             },
             //services: true,
