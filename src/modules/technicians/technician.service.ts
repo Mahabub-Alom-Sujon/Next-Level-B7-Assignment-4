@@ -3,8 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { Prisma } from "../../generated/prisma";
 import { TechnicianProfileWhereInput} from "../../../generated/prisma/models";
 
-import {CreateTechnician, UpdateTechnician, ITechnicianQuery} from "./technician.interface";
-import { IUpdateAvailability } from "./technician.interface";
+import {CreateTechnician, UpdateTechnician, ITechnicianQuery,IUpdateAvailability} from "./technician.interface";
 import {UpdateBookingStatus} from "./technician.interface";
 const createTechnician = async (
     userId: string,
@@ -55,15 +54,25 @@ const createTechnician = async (
 
 
 const updateAvailability = async (
-    technicianId: string,
+    userId: string,
     payload: IUpdateAvailability
 ) => {
     const { isAvailable, slots } = payload;
 
-    const result = await prisma.$transaction(async (tx) => {
+    const technician = await prisma.technicianProfile.findUnique({
+        where: {
+            userId,
+        },
+    });
+
+    if (!technician) {
+        throw new Error("Technician profile not found");
+    }
+
+    return prisma.$transaction(async (tx) => {
         await tx.technicianProfile.update({
             where: {
-                id: technicianId,
+                id: technician.id,
             },
             data: {
                 isAvailable,
@@ -72,24 +81,25 @@ const updateAvailability = async (
 
         await tx.availabilitySlot.deleteMany({
             where: {
-                technicianId,
+                technicianId: technician.id,
             },
         });
 
-        if (slots.length > 0) {
+        if (slots && slots.length > 0) {
             await tx.availabilitySlot.createMany({
                 data: slots.map((slot) => ({
-                    technicianId,
-                    dayOfWeek: slot.dayOfWeek,
+                    technicianId: technician.id,
+                    dayOfWeek: Number(slot.dayOfWeek),
                     startTime: slot.startTime,
                     endTime: slot.endTime,
+                    isAvailable: slot.isAvailable ?? true,
                 })),
             });
         }
 
         return tx.technicianProfile.findUnique({
             where: {
-                id: technicianId,
+                id: technician.id,
             },
             include: {
                 availability: {
@@ -105,8 +115,6 @@ const updateAvailability = async (
             },
         });
     });
-
-    return result;
 };
 
 // Filter By:
@@ -305,27 +313,65 @@ const getSingleTechnician = async (id: string) => {
     return result;
 };
 
-// const updateProfile = async (
-//     userId: string,
-//     payload: UpdateTechnician
-// ) => {
-//     const technician = await prisma.technicianProfile.findUnique({
-//         where: {
-//             userId,
-//         },
-//     });
-//
-//     if (!technician) {
-//         throw new Error("Technician profile not found");
-//     }
-//
-//     return prisma.technicianProfile.update({
-//         where: {
-//             userId,
-//         },
-//         data: payload,
-//     });
-// };
+const updateProfile = async (
+    userId: string,
+    payload: UpdateTechnician
+) => {
+    const technician = await prisma.technicianProfile.findUnique({
+        where: {
+            userId,
+        },
+    });
+
+    if (!technician) {
+        throw new Error("Technician profile not found");
+    }
+
+    const { availability, ...technicianData } = payload;
+
+    return prisma.$transaction(async (tx) => {
+        // Update technician profile
+        await tx.technicianProfile.update({
+            where: {
+                userId,
+            },
+            data: {
+                ...technicianData,
+            },
+        });
+
+        // Update availability if provided
+        if (availability) {
+            await tx.availabilitySlot.deleteMany({
+                where: {
+                    technicianId: technician.id,
+                },
+            });
+
+            if (availability.length > 0) {
+                await tx.availabilitySlot.createMany({
+                    data: availability.map((slot) => ({
+                        technicianId: technician.id,
+                        dayOfWeek: slot.dayOfWeek,
+                        startTime: slot.startTime,
+                        endTime: slot.endTime,
+                        isAvailable: slot.isAvailable ?? true,
+                    })),
+                });
+            }
+        }
+
+        return tx.technicianProfile.findUnique({
+            where: {
+                userId,
+            },
+            include: {
+                user: true,
+                availability: true,
+            },
+        });
+    });
+};
 
 const getMyBookings = async (userId: string) => {
     const technician = await prisma.technicianProfile.findUniqueOrThrow({
@@ -399,7 +445,7 @@ export const TechnicianService = {
     createTechnician,
     getAllTechnicians,
     getSingleTechnician,
-    // updateProfile,
+    updateProfile,
     getMyBookings,
     updateBookingStatus,
     updateAvailability,

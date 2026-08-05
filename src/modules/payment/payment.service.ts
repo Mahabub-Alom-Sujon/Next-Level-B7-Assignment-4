@@ -4,86 +4,86 @@ import Stripe from "stripe";
 import {BookingStatus, PaymentStatus} from "../../../generated/prisma/enums";
 import { CreatePaymentPayload } from "./payment.interface";
 
-const createPayment = async (
-    customerId: string,
-    payload: CreatePaymentPayload
-) => {
-    const booking = await prisma.booking.findUnique({
-        where: {
-            id: payload.bookingId,
-        },
-        include: {
-            service: true,
-            payments: true,
-        },
-    });
-
-    if (!booking) {
-        throw new Error("Booking not found");
-    }
-
-    if (booking.customerId !== customerId) {
-        throw new Error("Unauthorized");
-    }
-
-    if (
-        booking.status !== BookingStatus.ACCEPTED &&
-        booking.status !== BookingStatus.COMPLETED
-    ) {
-        throw new Error(
-            `Payment is allowed only for accepted or completed bookings. Current status: ${booking.status}`
-        );
-    }
-
-    // Prevent duplicate payment
-    if (booking.payments.length > 0) {
-        throw new Error("Payment already exists");
-    }
-
-
-
-    const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card"],
-
-        line_items: [
-            {
-                price_data: {
-                    currency: "bdt",
-                    unit_amount: Math.round(Number(booking.service.price) * 100),
-                    product: process.env.STRIPE_PRODUCT_ID!,
-                },
-                quantity: 1,
-            },
-        ],
-        success_url: `${process.env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-
-        cancel_url: `${process.env.CLIENT_URL}/payment/cancel`,
-
-        metadata: {
-            bookingId: booking.id,
-            customerId,
-        },
-    });
-
-    const payment = await prisma.payment.create({
-        data: {
-            bookingId: booking.id,
-            amount: booking.service.price,
-            transactionId: session.id, // Store Checkout Session ID
-            provider: "STRIPE",
-            method: "CARD",
-            status: PaymentStatus.PENDING,
-        },
-    });
-
-
-    return {
-        checkoutUrl: session.url,
-        sessionId: session.id,
-        payment,
-    };
-};
+// const createPayment = async (
+//     customerId: string,
+//     payload: CreatePaymentPayload
+// ) => {
+//     const booking = await prisma.booking.findUnique({
+//         where: {
+//             id: payload.bookingId,
+//         },
+//         include: {
+//             service: true,
+//             payments: true,
+//         },
+//     });
+//
+//     if (!booking) {
+//         throw new Error("Booking not found");
+//     }
+//
+//     if (booking.customerId !== customerId) {
+//         throw new Error("Unauthorized");
+//     }
+//
+//     if (
+//         booking.status !== BookingStatus.ACCEPTED &&
+//         booking.status !== BookingStatus.COMPLETED
+//     ) {
+//         throw new Error(
+//             `Payment is allowed only for accepted or completed bookings. Current status: ${booking.status}`
+//         );
+//     }
+//
+//     // Prevent duplicate payment
+//     if (booking.payments.length > 0) {
+//         throw new Error("Payment already exists");
+//     }
+//
+//
+//
+//     const session = await stripe.checkout.sessions.create({
+//         mode: "payment",
+//         payment_method_types: ["card"],
+//
+//         line_items: [
+//             {
+//                 price_data: {
+//                     currency: "bdt",
+//                     unit_amount: Math.round(Number(booking.service.price) * 100),
+//                     product: process.env.STRIPE_PRODUCT_ID!,
+//                 },
+//                 quantity: 1,
+//             },
+//         ],
+//         success_url: `${process.env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+//
+//         cancel_url: `${process.env.CLIENT_URL}/payment/cancel`,
+//
+//         metadata: {
+//             bookingId: booking.id,
+//             customerId,
+//         },
+//     });
+//
+//     const payment = await prisma.payment.create({
+//         data: {
+//             bookingId: booking.id,
+//             amount: booking.service.price,
+//             transactionId: session.id, // Store Checkout Session ID
+//             provider: "STRIPE",
+//             method: "CARD",
+//             status: PaymentStatus.PENDING,
+//         },
+//     });
+//
+//
+//     return {
+//         checkoutUrl: session.url,
+//         sessionId: session.id,
+//         payment,
+//     };
+// };
 
 // const createPayment = async (
 //     customerId: string,
@@ -367,7 +367,7 @@ const getPayment = async (
 };
 
 export const PaymentService = {
-    createPayment,
+    //createPayment,
     handleWebhook,
     //confirmPayment,
     getPayments,

@@ -25,6 +25,7 @@ export interface IAvailabilitySlot {
     dayOfWeek: number;
     startTime: string;
     endTime: string;
+    isAvailable?: boolean;
 }
 
 export interface IUpdateAvailability {
@@ -43,11 +44,11 @@ export interface ITechnicianQuery {
     sortBy?: string;
     sortOrder?: "asc" | "desc";
 }
-export interface IAvailabilitySlot {
-    dayOfWeek: number; // 0 = Sunday ... 6 = Saturday
-    startTime: string; // "09:00"
-    endTime: string;   // "17:00"
-}
+// export interface IAvailabilitySlot {
+//     dayOfWeek: number; // 0 = Sunday ... 6 = Saturday
+//     startTime: string; // "09:00"
+//     endTime: string;   // "17:00"
+// }
 export interface UpdateBookingStatus {
     status: BookingStatus;
 }

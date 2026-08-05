@@ -38,17 +38,6 @@ const getAllTechnicians = catchAsync(async (req, res) => {
 const updateAvailability = catchAsync(
     async (req: Request, res: Response) => {
         const id = req.users?.id as string;
-
-        // const technician = await prisma.technicianProfile.findUnique({
-        //     where: {
-        //         userId,
-        //     },
-        // });
-        //
-        // if (!technician) {
-        //     throw new Error("Technician profile not found");
-        // }
-
         const result = await TechnicianService.updateAvailability(
             id,
             req.body
@@ -75,20 +64,20 @@ const getSingleTechnician = catchAsync(async (req, res) => {
     });
 });
 
-// const updateProfile = catchAsync(async (req, res) => {
-//     const userId = req.users!.id;
-//     const result = await TechnicianService.updateProfile(
-//         userId,
-//         req.body
-//     );
-//
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: httpStatus.OK,
-//         message: "Technician profile updated successfully",
-//         data: result,
-//     });
-// });
+const updateProfile = catchAsync(async (req, res) => {
+    const userId = req.users!.id;
+    const result = await TechnicianService.updateProfile(
+        userId,
+        req.body
+    );
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Technician profile updated successfully",
+        data: result,
+    });
+});
 
 const getMyBookings = catchAsync(async (req, res) => {
     const userId = req.users?.id as string;
@@ -122,7 +111,7 @@ export const TechnicianController = {
     createTechnician,
     getAllTechnicians,
     getSingleTechnician,
-    // updateProfile,
+    updateProfile,
     getMyBookings,
     updateBookingStatus,
     updateAvailability,
