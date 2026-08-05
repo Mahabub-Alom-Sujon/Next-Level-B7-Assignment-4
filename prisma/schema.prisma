@@ -30,6 +30,7 @@ model Users {
   technician       TechnicianProfile?
   customerBookings Booking[]          @relation("CustomerBookings")
   reviews          Review[]
+  payments         Payment[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @default(now()) @updatedAt
 }
@@ -57,16 +58,15 @@ model TechnicianProfile {
 }
 
 model AvailabilitySlot {
-  id           String   @id @default(cuid())
+  id           String            @id @default(cuid())
   technicianId String
   dayOfWeek    Int // 0 = Sunday ... 6 = Saturday
   startTime    String // e.g. "09:00"
   endTime      String // e.g. "17:00"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   // Relation
-  technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  technician   TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
 
   @@unique([technicianId, dayOfWeek, startTime, endTime])
 }
@@ -123,14 +123,16 @@ model Booking {
 
 model Payment {
   id            String          @id @default(uuid())
-  bookingId     String          @unique
-  booking       Booking         @relation(fields: [bookingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   transactionId String?         @unique
-  amount        Decimal         @db.Decimal(10, 2)
+  amount        Int
   provider      PaymentProvider @default(STRIPE)
   method        PaymentMethod   @default(CARD)
   status        PaymentStatus   @default(PENDING)
   paidAt        DateTime?
+  bookingId     String          @unique
+  booking       Booking         @relation(fields: [bookingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  userId        String?
+  user          Users?          @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
