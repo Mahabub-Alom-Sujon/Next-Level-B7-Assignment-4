@@ -75,20 +75,20 @@ const getSingleTechnician = catchAsync(async (req, res) => {
     });
 });
 
-const updateProfile = catchAsync(async (req, res) => {
-    const userId = req.users!.id;
-    const result = await TechnicianService.updateProfile(
-        userId,
-        req.body
-    );
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Technician profile updated successfully",
-        data: result,
-    });
-});
+// const updateProfile = catchAsync(async (req, res) => {
+//     const userId = req.users!.id;
+//     const result = await TechnicianService.updateProfile(
+//         userId,
+//         req.body
+//     );
+//
+//     sendResponse(res, {
+//         success: true,
+//         statusCode: httpStatus.OK,
+//         message: "Technician profile updated successfully",
+//         data: result,
+//     });
+// });
 
 const getMyBookings = catchAsync(async (req, res) => {
     const userId = req.users?.id as string;
@@ -122,7 +122,7 @@ export const TechnicianController = {
     createTechnician,
     getAllTechnicians,
     getSingleTechnician,
-    updateProfile,
+    // updateProfile,
     getMyBookings,
     updateBookingStatus,
     updateAvailability,

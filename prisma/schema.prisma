@@ -105,7 +105,7 @@ model Booking {
   bookingDate  DateTime
   bookingTime  String?
   note         String?
-  // totalAmount  Decimal           @db.Decimal(10, 2)
+  address      String?
   status       BookingStatus     @default(REQUESTED)
   isAvailable  Boolean           @default(true)
   isBooked     Boolean           @default(false)

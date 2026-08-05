@@ -2,23 +2,24 @@ import { TechnicianProfileWhereInput } from "../../../generated/prisma/models";
 import {BookingStatus} from "../../../generated/prisma/enums";
 export interface CreateTechnician {
     bio: string;
-    experience:number;
+    experience: number;
     hourlyRate?: number;
     skills?: string;
-    // availability?: boolean;
     nationalId?: string;
     certification?: string;
-    // userId: string;
+    userId?:string;
+    availability?: IAvailabilitySlot[];
 }
 export interface UpdateTechnician {
-    bio: string;
-    experience:number;
+    bio?: string;
+    experience?: number;
     hourlyRate?: number;
     skills?: string;
-    // availability?: boolean;
     nationalId?: string;
     certification?: string;
-    // userId: string;
+    userId?:string;
+    isAvailable?: boolean;
+    availability?: IAvailabilitySlot[];
 }
 export interface IAvailabilitySlot {
     dayOfWeek: number;
@@ -42,11 +43,10 @@ export interface ITechnicianQuery {
     sortBy?: string;
     sortOrder?: "asc" | "desc";
 }
-export interface IAvailabilityPayload {
-    isAvailable?: boolean;
-    availableDays?: string[];
-    availableFrom?: string;
-    availableTo?: string;
+export interface IAvailabilitySlot {
+    dayOfWeek: number; // 0 = Sunday ... 6 = Saturday
+    startTime: string; // "09:00"
+    endTime: string;   // "17:00"
 }
 export interface UpdateBookingStatus {
     status: BookingStatus;

@@ -18,11 +18,10 @@ const createService = async (payload: CreateServicePayload) => {
         },
     });
 
-    return prisma.service.create({
+    return prisma.service.createMany({
         data: payload,
     });
 };
-
 const getAllServices = async (query: IServiceQuery) => {
     const {
         category,
