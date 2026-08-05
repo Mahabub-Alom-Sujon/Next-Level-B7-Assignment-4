@@ -3,7 +3,6 @@ import { CreateServicePayload } from "./service.interface";
 import {IServiceQuery } from "./service.interface"
 // @ts-ignore
 import { Prisma } from "../../../generated/prisma";
-import {Query} from "pg";
 const createService = async (payload: CreateServicePayload) => {
     // Check technician
     await prisma.technicianProfile.findUniqueOrThrow({
@@ -23,17 +22,6 @@ const createService = async (payload: CreateServicePayload) => {
         data: payload,
     });
 };
-// const getServices = async () => {
-//     return prisma.service.findMany({
-//         include: {
-//             technician: true,
-//             category: true,
-//         },
-//         orderBy: {
-//             createdAt: "desc",
-//         },
-//     });
-// };
 
 const getAllServices = async (query: IServiceQuery) => {
     const {
@@ -44,7 +32,7 @@ const getAllServices = async (query: IServiceQuery) => {
         minPrice,
         maxPrice,
         page = "1",
-        limit = "8",
+        limit = "9",
         sortBy = "createdAt",
         sortOrder = "desc",
     } = query;
@@ -183,21 +171,7 @@ const getAllServices = async (query: IServiceQuery) => {
                 include: {
                     review: true,
                 },
-            },
-            // bookings: {
-            //     where: {
-            //         review: {
-            //             is: {
-            //                 rating: {
-            //                     gte: Number(rating || 0),
-            //                 },
-            //             },
-            //         },
-            //     },
-            //     include: {
-            //         review: true,
-            //     },
-            // },
+            }
         },
     });
 
@@ -216,8 +190,40 @@ const getAllServices = async (query: IServiceQuery) => {
     };
 };
 
+const getSingleService = async (serviceId: string) => {
+    const getSingleService = await prisma.service.findUnique({
+        where: {
+            id: serviceId,
+        },
+        include: {
+            category: true,
+            technician:{
+                select:{
+                    id:true,
+                    bio:true,
+                    experience:true,
+                    hourlyRate:true,
+                    skills:true,
+                    certification:true,
+                    averageRating:true,
+                    totalReviews:true,
+                    completedJobs:true,
+                    user: { select: { id: true, name: true, profileImage: true } },
+                }
+            },
+            bookings:{
+                where:{
+                    isAvailable:true
+                }
+            }
+        }
+    });
+
+    return getSingleService;
+};
 
 export const ServiceServices = {
     createService,
-    getAllServices
+    getAllServices,
+    getSingleService
 };

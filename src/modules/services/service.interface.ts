@@ -3,6 +3,7 @@ export interface CreateServicePayload {
     description?: string;
     price: number;
     duration: number;
+    image?:string;
     serviceArea?: string;
     isAvailable?: boolean;
     technicianId: string;
@@ -10,6 +11,8 @@ export interface CreateServicePayload {
 }
 
 export interface IServiceQuery {
+    categoryId?: string;
+    technicianId?:string;
     category?: string;
     location?: string;
     rating?: string;
@@ -20,4 +23,17 @@ export interface IServiceQuery {
     limit?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
+}
+
+export interface IEditService {
+    serviceId: string;
+    title: string;
+    description?: string;
+    price: number;
+    duration: number;
+    image?:string;
+    serviceArea?: string;
+    isAvailable?: boolean;
+    technicianId: string;
+    categoryId: string;
 }

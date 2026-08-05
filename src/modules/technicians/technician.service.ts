@@ -237,14 +237,28 @@ const getSingleTechnician = async (id: string) => {
                     phone: true,
                     profileImage: true,
                     address: true,
-                    city:true,
-                    district:true,
-                    status:true,
-                    isVerified:true,
-                    isActive:true
+                    city: true,
+                    district: true,
+                    status: true,
+                    isVerified: true,
+                    isActive: true,
                 },
             },
-            //services: true,
+
+            availability: true,
+
+            services: {
+                where:{
+                    isAvailable:true
+                },
+                include: {
+                    category: true,
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+            },
+
             reviews: {
                 include: {
                     customer: {
@@ -257,6 +271,14 @@ const getSingleTechnician = async (id: string) => {
                 },
                 orderBy: {
                     createdAt: "desc",
+                },
+            },
+
+            _count: {
+                select: {
+                    services: true,
+                    bookings: true,
+                    reviews: true,
                 },
             },
         },

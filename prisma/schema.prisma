@@ -35,38 +35,39 @@ model Users {
 }
 
 model TechnicianProfile {
-  id            String    @id @default(uuid())
+  id            String             @id @default(uuid())
   bio           String?
-  experience    Int       @default(0)
+  experience    Int                @default(0)
   hourlyRate    Int? // stored in smallest currency unit (e.g., 50000 = 500.00 BDT)
   skills        String?
   nationalId    String?
   certification String?
-  averageRating Float     @default(0)
-  totalReviews  Int       @default(0)
-  completedJobs Int       @default(0)
-  isAvailable   Boolean   @default(true)
+  averageRating Float              @default(0)
+  totalReviews  Int                @default(0)
+  completedJobs Int                @default(0)
+  isAvailable   Boolean            @default(true)
   services      Service[]
   bookings      Booking[]
   reviews       Review[]
-  availability AvailabilitySlot[]
-  userId        String    @unique
-  user          Users     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  availability  AvailabilitySlot[]
+  userId        String             @unique
+  user          Users              @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @default(now()) @updatedAt
 }
 
 model AvailabilitySlot {
-  id String @id @default(cuid())
+  id           String   @id @default(cuid())
   technicianId String
   dayOfWeek    Int // 0 = Sunday ... 6 = Saturday
   startTime    String // e.g. "09:00"
   endTime      String // e.g. "17:00"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relation
   technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+
   @@unique([technicianId, dayOfWeek, startTime, endTime])
 }
 
@@ -84,6 +85,7 @@ model Service {
   id           String            @id @default(uuid())
   title        String
   description  String?
+  image        String? // URL or path of the service image
   price        Int // smallest currency unit (e.g., 150000 = 1,500.00 BDT)
   duration     Int // Minutes
   serviceArea  String?
@@ -105,6 +107,8 @@ model Booking {
   note         String?
   // totalAmount  Decimal           @db.Decimal(10, 2)
   status       BookingStatus     @default(REQUESTED)
+  isAvailable  Boolean           @default(true)
+  isBooked     Boolean           @default(false)
   payments     Payment?
   review       Review?
   customerId   String
