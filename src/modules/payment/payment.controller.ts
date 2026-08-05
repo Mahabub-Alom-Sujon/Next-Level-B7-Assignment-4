@@ -3,19 +3,19 @@ import { Request, Response } from "express";
 import { sendResponse } from "../../utils/send-response";
 import { PaymentService } from "./payment.service";
 
-// const createPayment = catchAsync(async (req: Request, res: Response) => {
-//     const result = await PaymentService.createPayment(
-//         req.users!.id,
-//         req.body
-//     );
-//
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: 200,
-//         message: "Stripe Checkout session created successfully",
-//         data: result,
-//     });
-// });
+const createPayment = catchAsync(async (req: Request, res: Response) => {
+    const result = await PaymentService.createPayment(
+        req.users!.id,
+        req.body
+    );
+
+    sendResponse(res, {
+        success: true,
+        statusCode: 200,
+        message: "Stripe Checkout session created successfully",
+        data: result,
+    });
+});
 
 // const confirmPayment = catchAsync(async (req, res) => {
 //     const { sessionId } = req.body;
@@ -81,7 +81,7 @@ const getPayment = catchAsync(async (req, res) => {
 });
 
 export const PaymentController = {
-    //createPayment,
+    createPayment,
     handleWebhook,
     //confirmPayment,
     getPayments,

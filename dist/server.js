@@ -1784,6 +1784,67 @@ import Stripe from "stripe";
 var stripe = new Stripe(config_default.stripe_secret_key);
 
 // src/modules/payment/payment.service.ts
+var createPayment = async (customerId, payload) => {
+  const booking = await prisma.booking.findUnique({
+    where: {
+      id: payload.bookingId
+    },
+    include: {
+      service: true,
+      payments: true
+    }
+  });
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+  if (booking.customerId !== customerId) {
+    throw new Error("Unauthorized");
+  }
+  if (booking.status !== BookingStatus.ACCEPTED && booking.status !== BookingStatus.COMPLETED) {
+    throw new Error(
+      `Payment is allowed only for accepted or completed bookings. Current status: ${booking.status}`
+    );
+  }
+  if (booking.payments) {
+    throw new Error("Payment already exists");
+  }
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: "bdt",
+          unit_amount: Math.round(Number(booking.service.price) * 100),
+          product: process.env.STRIPE_PRODUCT_ID
+        },
+        quantity: 1
+      }
+    ],
+    success_url: `${process.env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.CLIENT_URL}/payment/cancel`,
+    metadata: {
+      bookingId: booking.id,
+      customerId
+    }
+  });
+  const payment = await prisma.payment.create({
+    data: {
+      bookingId: booking.id,
+      amount: booking.service.price,
+      transactionId: session.id,
+      // Store Checkout Session ID
+      provider: "STRIPE",
+      method: "CARD",
+      status: PaymentStatus.PENDING
+    }
+  });
+  return {
+    checkoutUrl: session.url,
+    sessionId: session.id,
+    payment
+  };
+};
 var handleWebhook = async (signature, body) => {
   let event;
   try {
@@ -1871,7 +1932,7 @@ var getPayment = async (customerId, paymentId) => {
   });
 };
 var PaymentService = {
-  //createPayment,
+  createPayment,
   handleWebhook,
   //confirmPayment,
   getPayments,
@@ -1879,6 +1940,18 @@ var PaymentService = {
 };
 
 // src/modules/payment/payment.controller.ts
+var createPayment2 = catchAsync(async (req, res) => {
+  const result = await PaymentService.createPayment(
+    req.users.id,
+    req.body
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Stripe Checkout session created successfully",
+    data: result
+  });
+});
 var handleWebhook2 = catchAsync(async (req, res) => {
   const signature = req.headers["stripe-signature"];
   if (!signature || typeof signature !== "string") {
@@ -1917,7 +1990,7 @@ var getPayment2 = catchAsync(async (req, res) => {
   });
 });
 var PaymentController = {
-  //createPayment,
+  createPayment: createPayment2,
   handleWebhook: handleWebhook2,
   //confirmPayment,
   getPayments: getPayments2,
@@ -1926,6 +1999,7 @@ var PaymentController = {
 
 // src/modules/payment/payment.route.ts
 var router9 = express2.Router();
+router9.post("/create", auth(UserRole.ADMIN, UserRole.CUSTOMER), PaymentController.createPayment);
 router9.post(
   "/webhook",
   express2.raw({ type: "application/json" }),

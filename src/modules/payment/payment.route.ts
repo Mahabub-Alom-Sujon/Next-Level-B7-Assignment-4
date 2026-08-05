@@ -5,7 +5,7 @@ import {UserRole} from "../../../generated/prisma/enums";
 
 const router = express.Router();
 
-//router.post("/create", auth(UserRole.ADMIN,UserRole.CUSTOMER), PaymentController.createPayment);
+router.post("/create", auth(UserRole.ADMIN,UserRole.CUSTOMER), PaymentController.createPayment);
 //router.post("/confirm", PaymentController.confirmPayment);
 router.post("/webhook",
     express.raw({ type: "application/json" }),

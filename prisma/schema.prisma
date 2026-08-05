@@ -131,9 +131,9 @@ model Payment {
   status        PaymentStatus   @default(PENDING)
   paidAt        DateTime?
   bookingId     String          @unique
-  booking       Booking         @relation(fields: [bookingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  booking       Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   userId        String?
-  user          Users?          @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user          Users?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
