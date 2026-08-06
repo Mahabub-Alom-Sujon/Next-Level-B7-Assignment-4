@@ -7,29 +7,36 @@ const getAllUsers = async () => {
         orderBy: {
             createdAt: "desc",
         },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            profileImage: true,
-            role: true,
-            status: true,
-            createdAt: true,
-        },
+        include:{
+            technician:true,
+        }
+        // select: {
+        //     id: true,
+        //     name: true,
+        //     email: true,
+        //     phone: true,
+        //     profileImage: true,
+        //     role: true,
+        //     status: true,
+        //     createdAt: true,
+        // },
+
     });
 };
 
 const updateUserStatus = async (
     id: string,
-    status: "ACTIVE" | "BLOCKED"
+    //status: "ACTIVE" | "BLOCKED",
+    isBanned: boolean
+
 ) => {
     return prisma.users.update({
         where: {
             id,
         },
         data: {
-            status,
+            //isBanned: status === "BLOCKED",
+            isBanned,
         },
         omit:{
             password: true,
