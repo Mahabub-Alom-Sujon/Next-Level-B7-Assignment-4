@@ -25,8 +25,8 @@ model Users {
   postalCode       String?
   role             UserRole           @default(CUSTOMER)
   status           UserStatus         @default(ACTIVE)
-  isVerified       Boolean            @default(false)
   isActive         Boolean            @default(true)
+  isBanned         Boolean            @default(false)
   technician       TechnicianProfile?
   customerBookings Booking[]          @relation("CustomerBookings")
   reviews          Review[]
