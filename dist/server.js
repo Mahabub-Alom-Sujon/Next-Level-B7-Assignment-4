@@ -1216,16 +1216,142 @@ var createCategory = async (payload) => {
     data: payload
   });
 };
+var getAllService = async () => {
+  const where = {
+    isAvailable: true
+  };
+  const [services, total] = await prisma.$transaction([
+    prisma.service.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc"
+      }
+    }),
+    prisma.service.count({
+      where
+    })
+  ]);
+  return {
+    total,
+    services
+  };
+};
+var getAllTechnicians3 = async () => {
+  const where = {
+    isAvailable: true
+  };
+  const [technicians, total] = await prisma.$transaction([
+    prisma.technicianProfile.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            profileImage: true,
+            role: true,
+            createdAt: true
+          }
+        }
+        // _count: {
+        //     select: {
+        //         services: true,
+        //         bookings: true,
+        //         reviews: true,
+        //     },
+        // },
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    }),
+    prisma.technicianProfile.count({
+      where
+    })
+  ]);
+  return {
+    total,
+    technicians
+  };
+};
+var getDashboardOverview = async () => {
+  const [
+    totalUsers,
+    totalTechnicians,
+    totalBookings,
+    totalRevenue,
+    pendingBookings,
+    activeTechnicians,
+    recentBookings
+  ] = await prisma.$transaction([
+    prisma.users.count(),
+    prisma.technicianProfile.count(),
+    prisma.booking.count(),
+    prisma.payment.aggregate({
+      where: {
+        status: "COMPLETED"
+      },
+      _sum: {
+        amount: true
+      }
+    }),
+    prisma.booking.count({
+      where: {
+        status: BookingStatus.REQUESTED
+      }
+    }),
+    prisma.technicianProfile.count({
+      where: {
+        isAvailable: true
+      }
+    }),
+    prisma.booking.findMany({
+      take: 5,
+      orderBy: {
+        createdAt: "desc"
+      },
+      include: {
+        customer: {
+          select: {
+            name: true
+          }
+        },
+        service: {
+          select: {
+            title: true,
+            price: true
+          }
+        }
+      }
+    })
+  ]);
+  return {
+    overview: {
+      totalUsers,
+      totalTechnicians,
+      totalBookings,
+      totalRevenue: totalRevenue._sum.amount ?? 0,
+      pendingBookings,
+      activeTechnicians
+    },
+    recentBookings
+  };
+};
 var adminService = {
   getAllUsers,
   getAllBookings,
   updateUserStatus,
   getAllCategories,
-  createCategory
+  createCategory,
+  getAllService,
+  getAllTechnicians: getAllTechnicians3,
+  getDashboardOverview
 };
 
 // src/modules/admin/ admin.controller.ts
-var getAllUsers2 = catchAsync(async (req, res) => {
+var getAllUsers2 = catchAsync(async (req, res, next) => {
   const result = await adminService.getAllUsers();
   sendResponse(res, {
     success: true,
@@ -1234,7 +1360,7 @@ var getAllUsers2 = catchAsync(async (req, res) => {
     data: result
   });
 });
-var updateUserStatus2 = catchAsync(async (req, res) => {
+var updateUserStatus2 = catchAsync(async (req, res, next) => {
   const result = await adminService.updateUserStatus(
     req.params.id,
     req.body.status
@@ -1246,7 +1372,7 @@ var updateUserStatus2 = catchAsync(async (req, res) => {
     data: result
   });
 });
-var getAllBookings2 = catchAsync(async (req, res) => {
+var getAllBookings2 = catchAsync(async (req, res, next) => {
   const result = await adminService.getAllBookings();
   sendResponse(res, {
     success: true,
@@ -1255,7 +1381,7 @@ var getAllBookings2 = catchAsync(async (req, res) => {
     data: result
   });
 });
-var getAllCategories2 = catchAsync(async (req, res) => {
+var getAllCategories2 = catchAsync(async (req, res, next) => {
   const result = await adminService.getAllCategories();
   sendResponse(res, {
     success: true,
@@ -1264,7 +1390,7 @@ var getAllCategories2 = catchAsync(async (req, res) => {
     data: result
   });
 });
-var createCategory2 = catchAsync(async (req, res) => {
+var createCategory2 = catchAsync(async (req, res, next) => {
   const result = await adminService.createCategory(req.body);
   sendResponse(res, {
     success: true,
@@ -1273,12 +1399,42 @@ var createCategory2 = catchAsync(async (req, res) => {
     data: result
   });
 });
+var getAllServices = catchAsync(async (req, res, next) => {
+  const result = await adminService.getAllService();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus6.OK,
+    message: "Services retrieved successfully",
+    data: result
+  });
+});
+var getAllTechnicians4 = catchAsync(async (req, res, next) => {
+  const result = await adminService.getAllTechnicians();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus6.OK,
+    message: "Technicians retrieved successfully",
+    data: result
+  });
+});
+var getDashboardOverview2 = catchAsync(async (req, res) => {
+  const result = await adminService.getDashboardOverview();
+  sendResponse(res, {
+    statusCode: httpStatus6.OK,
+    success: true,
+    message: "Dashboard overview retrieved successfully",
+    data: result
+  });
+});
 var AdminController = {
   getAllUsers: getAllUsers2,
   updateUserStatus: updateUserStatus2,
   getAllBookings: getAllBookings2,
   getAllCategories: getAllCategories2,
-  createCategory: createCategory2
+  createCategory: createCategory2,
+  getAllServices,
+  getAllTechnicians: getAllTechnicians4,
+  getDashboardOverview: getDashboardOverview2
 };
 
 // src/modules/admin/admin.route.ts
@@ -1303,6 +1459,21 @@ router4.post(
   "/categories",
   auth(UserRole.ADMIN),
   AdminController.createCategory
+);
+router4.get(
+  "/services",
+  auth(UserRole.ADMIN),
+  AdminController.getAllServices
+);
+router4.get(
+  "/technician",
+  auth(UserRole.ADMIN),
+  AdminController.getAllTechnicians
+);
+router4.get(
+  "/dashboard",
+  auth("ADMIN"),
+  AdminController.getDashboardOverview
 );
 var adminRoutes = router4;
 
@@ -1444,7 +1615,7 @@ var createService = async (payload) => {
     data: payload
   });
 };
-var getAllServices = async (query) => {
+var getAllServices2 = async (query) => {
   const {
     category,
     location,
@@ -1612,7 +1783,7 @@ var getSingleService = async (serviceId) => {
 };
 var ServiceServices = {
   createService,
-  getAllServices,
+  getAllServices: getAllServices2,
   getSingleService
 };
 
@@ -1627,7 +1798,7 @@ var createService2 = catchAsync(async (req, res, next) => {
     data: result
   });
 });
-var getAllServices2 = catchAsync(async (req, res, next) => {
+var getAllServices3 = catchAsync(async (req, res, next) => {
   const result = await ServiceServices.getAllServices(req.query);
   sendResponse(res, {
     success: true,
@@ -1649,7 +1820,7 @@ var getSingleServiceById = catchAsync(async (req, res, next) => {
 var ServiceControllers = {
   createService: createService2,
   getSingleServiceById,
-  getAllServices: getAllServices2
+  getAllServices: getAllServices3
 };
 
 // src/modules/services/service.route.ts
