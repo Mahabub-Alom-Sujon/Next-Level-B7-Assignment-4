@@ -30,5 +30,21 @@ router.post(
     auth(UserRole.ADMIN),
     AdminController.createCategory
 );
+router.get(
+    "/services",
+    auth(UserRole.ADMIN),
+    AdminController.getAllServices
+);
+router.get(
+    "/technician",
+    auth(UserRole.ADMIN),
+    AdminController.getAllTechnicians
+);
+
+router.get(
+    "/dashboard",
+    auth("ADMIN"),
+    AdminController.getDashboardOverview
+);
 
 export const adminRoutes = router;

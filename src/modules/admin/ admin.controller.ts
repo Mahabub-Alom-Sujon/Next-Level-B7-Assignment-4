@@ -1,10 +1,10 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express"
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catch-async.js";
 import { sendResponse } from "../../utils/send-response.js";
 import { adminService } from "./ admin.service";
 
-const getAllUsers = catchAsync(async (req, res) => {
+const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await adminService.getAllUsers();
 
     sendResponse(res, {
@@ -15,7 +15,7 @@ const getAllUsers = catchAsync(async (req, res) => {
     });
 });
 
-const updateUserStatus = catchAsync(async (req, res) => {
+const updateUserStatus = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await adminService.updateUserStatus(
         req.params.id as string,
         req.body.status
@@ -29,7 +29,7 @@ const updateUserStatus = catchAsync(async (req, res) => {
     });
 });
 
-const getAllBookings = catchAsync(async (req, res) => {
+const getAllBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await adminService.getAllBookings();
 
     sendResponse(res, {
@@ -40,7 +40,7 @@ const getAllBookings = catchAsync(async (req, res) => {
     });
 });
 
-const getAllCategories = catchAsync(async (req, res) => {
+const getAllCategories = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await adminService.getAllCategories();
 
     sendResponse(res, {
@@ -51,7 +51,7 @@ const getAllCategories = catchAsync(async (req, res) => {
     });
 });
 
-const createCategory = catchAsync(async (req, res) => {
+const createCategory = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await adminService.createCategory(req.body);
 
     sendResponse(res, {
@@ -62,10 +62,47 @@ const createCategory = catchAsync(async (req, res) => {
     });
 });
 
+const getAllServices=catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await adminService.getAllService();
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Services retrieved successfully",
+        data: result,
+    });
+})
+
+const getAllTechnicians=catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await adminService.getAllTechnicians();
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Technicians retrieved successfully",
+        data: result,
+    });
+})
+
+const getDashboardOverview = catchAsync(async (req, res) => {
+    const result = await adminService.getDashboardOverview();
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Dashboard overview retrieved successfully",
+        data: result,
+    });
+});
+
+
 export const AdminController = {
     getAllUsers,
     updateUserStatus,
     getAllBookings,
     getAllCategories,
     createCategory,
+    getAllServices,
+    getAllTechnicians,
+    getDashboardOverview
 };
