@@ -26,24 +26,25 @@ const getAllUsers = async () => {
 
 const updateUserStatus = async (
     id: string,
-    status: "ACTIVE" | "BLOCKED",
-    //isBanned: boolean
-
+    status: "ACTIVE"  | "BLOCKED"
 ) => {
+    const isBanned = status === "BLOCKED";
+
     return prisma.users.update({
         where: {
             id,
         },
         data: {
-            isBanned: status === "BLOCKED",
-            //isBanned,
+            status,
+            isBanned,
         },
-        omit:{
+        omit: {
             password: true,
             profileImage: true,
-        }
+        },
     });
 };
+
 
 const getAllBookings = async () => {
     return prisma.booking.findMany({

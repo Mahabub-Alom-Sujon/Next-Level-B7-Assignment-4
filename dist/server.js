@@ -1178,13 +1178,14 @@ var getAllUsers = async () => {
   });
 };
 var updateUserStatus = async (id, status) => {
+  const isBanned = status === "BLOCKED";
   return prisma.users.update({
     where: {
       id
     },
     data: {
-      isBanned: status === "BLOCKED"
-      //isBanned,
+      status,
+      isBanned
     },
     omit: {
       password: true,
