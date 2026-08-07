@@ -26,8 +26,8 @@ const getAllUsers = async () => {
 
 const updateUserStatus = async (
     id: string,
-    //status: "ACTIVE" | "BLOCKED",
-    isBanned: boolean
+    status: "ACTIVE" | "BLOCKED",
+    //isBanned: boolean
 
 ) => {
     return prisma.users.update({
@@ -35,8 +35,8 @@ const updateUserStatus = async (
             id,
         },
         data: {
-            //isBanned: status === "BLOCKED",
-            isBanned,
+            isBanned: status === "BLOCKED",
+            //isBanned,
         },
         omit:{
             password: true,
