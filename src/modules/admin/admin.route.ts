@@ -30,6 +30,11 @@ router.post(
     auth(UserRole.ADMIN),
     AdminController.createCategory
 );
+
+//GET /api/services
+// GET /api/services?page=2&limit=10
+// GET /api/services?searchTerm=plumbing
+//GET /api/services?page=1&limit=9&searchTerm=electrician
 router.get(
     "/services",
     auth(UserRole.ADMIN),

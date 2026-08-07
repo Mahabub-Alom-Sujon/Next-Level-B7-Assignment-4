@@ -266,7 +266,6 @@ const getSingleTechnician = async (id: string) => {
                     city: true,
                     district: true,
                     status: true,
-                    isVerified: true,
                     isActive: true,
                 },
             },

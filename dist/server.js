@@ -887,7 +887,6 @@ var getSingleTechnician = async (id) => {
           city: true,
           district: true,
           status: true,
-          isVerified: true,
           isActive: true
         }
       },
@@ -1193,61 +1192,294 @@ var updateUserStatus = async (id, status) => {
     }
   });
 };
-var getAllBookings = async () => {
-  return prisma.booking.findMany({
-    include: {
-      customer: true,
-      technician: {
-        include: {
-          user: true
+var getAllBookings = async (query) => {
+  const {
+    page = "1",
+    limit = "10",
+    searchTerm = ""
+  } = query;
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+  const whereCondition = {
+    ...searchTerm && {
+      OR: [
+        {
+          customer: {
+            name: {
+              contains: searchTerm,
+              mode: "insensitive"
+            }
+          }
+        },
+        {
+          customer: {
+            email: {
+              contains: searchTerm,
+              mode: "insensitive"
+            }
+          }
+        },
+        {
+          technician: {
+            user: {
+              name: {
+                contains: searchTerm,
+                mode: "insensitive"
+              }
+            }
+          }
+        },
+        {
+          service: {
+            title: {
+              contains: searchTerm,
+              mode: "insensitive"
+            }
+          }
         }
+        // ...(isNaN(Number(searchTerm))
+        //     ? []
+        //     : [
+        //         {
+        //             totalPrice: Number(searchTerm),
+        //         },
+        //     ]),
+      ]
+    }
+  };
+  const [bookings, total] = await prisma.$transaction([
+    prisma.booking.findMany({
+      where: whereCondition,
+      skip,
+      take: limitNumber,
+      include: {
+        customer: true,
+        technician: {
+          include: {
+            user: true
+          }
+        },
+        service: true
       },
-      service: true
+      orderBy: {
+        createdAt: "desc"
+      }
+    }),
+    prisma.booking.count({
+      where: whereCondition
+    })
+  ]);
+  return {
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPage: Math.ceil(total / limitNumber)
     },
-    orderBy: {
-      createdAt: "desc"
-    }
-  });
-};
-var getAllCategories = async () => {
-  return prisma.category.findMany({
-    orderBy: {
-      name: "asc"
-    }
-  });
+    data: bookings
+  };
 };
 var createCategory = async (payload) => {
   return prisma.category.createMany({
     data: payload
   });
 };
-var getAllService = async () => {
-  const where = {
-    isAvailable: true
+var getAllCategories = async (query) => {
+  const {
+    page = "1",
+    limit = "10",
+    searchTerm = ""
+  } = query;
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+  const whereCondition = {
+    ...searchTerm && {
+      OR: [
+        {
+          name: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        },
+        {
+          description: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        }
+      ]
+    }
+  };
+  const [categories, total] = await prisma.$transaction([
+    prisma.category.findMany({
+      where: whereCondition,
+      skip,
+      take: limitNumber,
+      orderBy: {
+        createdAt: "desc"
+      }
+    }),
+    prisma.category.count({
+      where: whereCondition
+    })
+  ]);
+  return {
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPage: Math.ceil(total / limitNumber)
+    },
+    data: categories
+  };
+};
+var getAllService = async (query) => {
+  const {
+    page = "1",
+    limit = "10",
+    searchTerm = ""
+  } = query;
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+  const whereCondition = {
+    isAvailable: true,
+    ...searchTerm && {
+      OR: [
+        {
+          title: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        },
+        {
+          description: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        },
+        {
+          category: {
+            name: {
+              contains: searchTerm,
+              mode: "insensitive"
+            }
+          }
+        },
+        {
+          technician: {
+            user: {
+              name: {
+                contains: searchTerm,
+                mode: "insensitive"
+              }
+            }
+          }
+        },
+        ...isNaN(Number(searchTerm)) ? [] : [
+          {
+            price: Number(searchTerm)
+          }
+        ]
+      ]
+    }
   };
   const [services, total] = await prisma.$transaction([
     prisma.service.findMany({
-      where,
+      where: whereCondition,
+      skip,
+      take: limitNumber,
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        technician: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            bookings: true
+          }
+        }
+      },
       orderBy: {
         createdAt: "desc"
       }
     }),
     prisma.service.count({
-      where
+      where: whereCondition
     })
   ]);
   return {
-    total,
-    services
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPage: Math.ceil(total / limitNumber)
+    },
+    data: services
   };
 };
-var getAllTechnicians3 = async () => {
-  const where = {
-    isAvailable: true
+var getAllTechnicians3 = async (query) => {
+  const {
+    page = "1",
+    limit = "10",
+    searchTerm = ""
+  } = query;
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+  const whereCondition = {
+    isAvailable: true,
+    ...searchTerm && {
+      OR: [
+        {
+          skills: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        },
+        {
+          bio: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        },
+        {
+          user: {
+            is: {
+              name: {
+                contains: searchTerm,
+                mode: "insensitive"
+              }
+            }
+          }
+        },
+        ...isNaN(Number(searchTerm)) ? [] : [
+          {
+            hourlyRate: Number(searchTerm)
+          }
+        ]
+      ]
+    }
   };
   const [technicians, total] = await prisma.$transaction([
     prisma.technicianProfile.findMany({
-      where,
+      where: whereCondition,
+      skip,
+      take: limitNumber,
       include: {
         user: {
           select: {
@@ -1259,26 +1491,31 @@ var getAllTechnicians3 = async () => {
             role: true,
             createdAt: true
           }
+        },
+        _count: {
+          select: {
+            services: true,
+            bookings: true,
+            reviews: true
+          }
         }
-        // _count: {
-        //     select: {
-        //         services: true,
-        //         bookings: true,
-        //         reviews: true,
-        //     },
-        // },
       },
       orderBy: {
         createdAt: "desc"
       }
     }),
     prisma.technicianProfile.count({
-      where
+      where: whereCondition
     })
   ]);
   return {
-    total,
-    technicians
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPage: Math.ceil(total / limitNumber)
+    },
+    data: technicians
   };
 };
 var getDashboardOverview = async () => {
@@ -1378,7 +1615,7 @@ var updateUserStatus2 = catchAsync(async (req, res, next) => {
   });
 });
 var getAllBookings2 = catchAsync(async (req, res, next) => {
-  const result = await adminService.getAllBookings();
+  const result = await adminService.getAllBookings(req.query);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus6.OK,
@@ -1387,7 +1624,7 @@ var getAllBookings2 = catchAsync(async (req, res, next) => {
   });
 });
 var getAllCategories2 = catchAsync(async (req, res, next) => {
-  const result = await adminService.getAllCategories();
+  const result = await adminService.getAllCategories(req.query);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus6.OK,
@@ -1405,7 +1642,7 @@ var createCategory2 = catchAsync(async (req, res, next) => {
   });
 });
 var getAllServices = catchAsync(async (req, res, next) => {
-  const result = await adminService.getAllService();
+  const result = await adminService.getAllService(req.query);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus6.OK,
@@ -1414,7 +1651,7 @@ var getAllServices = catchAsync(async (req, res, next) => {
   });
 });
 var getAllTechnicians4 = catchAsync(async (req, res, next) => {
-  const result = await adminService.getAllTechnicians();
+  const result = await adminService.getAllTechnicians(req.query);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus6.OK,

@@ -3,3 +3,9 @@ export interface CreateCategory {
     description?: string;
     //icon?: String;
 }
+
+export interface Query {
+    page?: string;
+    limit?: string;
+    searchTerm?: string;
+}

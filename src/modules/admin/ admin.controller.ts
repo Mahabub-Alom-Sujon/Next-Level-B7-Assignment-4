@@ -32,7 +32,7 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response, next: Ne
 });
 
 const getAllBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await adminService.getAllBookings();
+    const result = await adminService.getAllBookings(req.query);
 
     sendResponse(res, {
         success: true,
@@ -43,7 +43,7 @@ const getAllBookings = catchAsync(async (req: Request, res: Response, next: Next
 });
 
 const getAllCategories = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await adminService.getAllCategories();
+    const result = await adminService.getAllCategories(req.query);
 
     sendResponse(res, {
         success: true,
@@ -65,7 +65,7 @@ const createCategory = catchAsync(async (req: Request, res: Response, next: Next
 });
 
 const getAllServices=catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await adminService.getAllService();
+    const result = await adminService.getAllService(req.query);
 
     sendResponse(res, {
         success: true,
@@ -76,7 +76,7 @@ const getAllServices=catchAsync(async (req: Request, res: Response, next: NextFu
 })
 
 const getAllTechnicians=catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await adminService.getAllTechnicians();
+    const result = await adminService.getAllTechnicians(req.query);
 
     sendResponse(res, {
         success: true,
