@@ -1,8 +1,8 @@
 export interface CreateBookingPayload {
     bookingDate: string;
-    customerAddress: string;
+    bookingTime: string;
+    address: string;
     note?: string;
-    totalAmount: number;
     technicianId: string;
     serviceId: string;
 }

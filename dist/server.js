@@ -1737,9 +1737,9 @@ var createBooking = async (customerId, payload) => {
   const booking = await prisma.booking.create({
     data: {
       bookingDate: new Date(payload.bookingDate),
-      customerAddress: payload.customerAddress,
+      bookingTime: payload.bookingTime,
+      address: payload.address,
       note: payload.note,
-      totalAmount: payload.totalAmount,
       customerId,
       technicianId: payload.technicianId,
       serviceId: payload.serviceId
