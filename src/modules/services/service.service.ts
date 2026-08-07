@@ -207,6 +207,7 @@ const getSingleService = async (serviceId: string) => {
                     averageRating:true,
                     totalReviews:true,
                     completedJobs:true,
+                    availability:true,
                     user: { select: { id: true, name: true, profileImage: true } },
                 }
             },
