@@ -166,6 +166,7 @@ enum UserStatus {
 
 enum BookingStatus {
   REQUESTED
+  PENDING
   ACCEPTED
   DECLINED
   PAID

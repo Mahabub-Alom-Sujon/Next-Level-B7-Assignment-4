@@ -440,6 +440,239 @@ const updateBookingStatus = async (
     return result;
 };
 
+// get My Technician Service
+
+const getMyServices = async (userId: string) => {
+    const technician = await prisma.technicianProfile.findUniqueOrThrow({
+        where: {
+            userId,
+        },
+    });
+    if (!technician) {
+        throw new Error("Technician profile not found");
+    }
+    return prisma.service.findMany({
+        where: {
+            technicianId: technician.id,
+        },
+        include: {
+                category: true,
+                technician: {
+                    select:{
+                        id:true,
+                        user:{
+                            select:{
+                                id:true,
+                                name:true,
+                            }
+                        }
+                    }
+                },
+            },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+};
+
+const getMyAvailability = async (userId: string) => {
+    const technician = await prisma.technicianProfile.findUniqueOrThrow({
+        where: {
+            userId,
+        },
+    });
+    if (!technician) {
+        throw new Error("Technician profile not found");
+    }
+    return prisma.availabilitySlot.findMany({
+        where: {
+            technicianId: technician.id,
+        },
+        include:{
+            technician: true,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+};
+
+
+const getDashboardOverview = async (userId: string) => {
+    const technician = await prisma.technicianProfile.findUniqueOrThrow({
+        where: {
+            userId,
+        },
+    });
+
+    const technicianId = technician.id;
+
+    const now = new Date();
+
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const startOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+    );
+
+    const [
+        totalBookings,
+        bookingsThisMonth,
+        pendingRequests,
+        todaysJobs,
+        completedJobs,
+        reviews,
+        upcomingJobs,
+        recentBookings,
+        totalEarnings,
+    ] = await Promise.all([
+        // Total Bookings
+        prisma.booking.count({
+            where: {
+                technicianId,
+            },
+        }),
+
+        // Bookings created this month
+        prisma.booking.count({
+            where: {
+                technicianId,
+                createdAt: {
+                    gte: startOfMonth,
+                },
+            },
+        }),
+
+        // Pending Requests
+        prisma.booking.count({
+            where: {
+                technicianId,
+                status: "REQUESTED",
+            },
+        }),
+
+        // Today's Jobs
+        prisma.booking.count({
+            where: {
+                technicianId,
+                bookingDate: {
+                    gte: startOfToday,
+                    lte: endOfToday,
+                },
+                status: {
+                    in: [
+                        "ACCEPTED",
+                        "PAID",
+                        "IN_PROGRESS",
+                    ],
+                },
+            },
+        }),
+
+        // Completed Jobs
+        prisma.booking.count({
+            where: {
+                technicianId,
+                status: "COMPLETED",
+            },
+        }),
+
+        // Reviews
+        prisma.review.findMany({
+            where: {
+                booking: {
+                    technicianId,
+                },
+            },
+            select: {
+                rating: true,
+            },
+        }),
+
+        // Upcoming Jobs
+        prisma.booking.findMany({
+            where: {
+                technicianId,
+                bookingDate: {
+                    gt: endOfToday,
+                },
+                status: {
+                    in: [
+                        "ACCEPTED",
+                        "PAID",
+                        "IN_PROGRESS",
+                    ],
+                },
+            },
+            include: {
+                customer: true,
+                service: true,
+            },
+            orderBy: {
+                bookingDate: "asc",
+            },
+            take: 5,
+        }),
+
+        // Recent Bookings
+        prisma.booking.findMany({
+            where: {
+                technicianId,
+            },
+            include: {
+                customer: true,
+                service: true,
+                // review: true,
+                // payments: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: 5,
+        }),
+
+        // Total Earnings
+        prisma.payment.aggregate({
+            where: {
+                booking: {
+                    technicianId,
+                },
+                status: "COMPLETED",
+            },
+            _sum: {
+                amount: true,
+            },
+        }),
+    ]);
+
+    // Average Rating
+    const averageRating =
+        reviews.length > 0
+            ? reviews.reduce(
+                  (sum, review) => sum + review.rating,
+                  0
+              ) / reviews.length
+            : 0;
+
+    return {
+        totalBookings,
+        bookingsThisMonth,
+        pendingRequests,
+        todaysJobs,
+        completedJobs,
+        averageRating: Number(averageRating.toFixed(1)),
+        totalReviews: reviews.length,
+        totalEarnings: totalEarnings._sum.amount ?? 0,
+        upcomingJobs,
+        recentBookings,
+    };
+};
 export const TechnicianService = {
     createTechnician,
     getAllTechnicians,
@@ -448,4 +681,7 @@ export const TechnicianService = {
     getMyBookings,
     updateBookingStatus,
     updateAvailability,
+    getMyServices,
+    getMyAvailability,
+    getDashboardOverview
 };

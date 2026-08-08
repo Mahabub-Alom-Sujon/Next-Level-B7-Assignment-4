@@ -107,6 +107,39 @@ const updateBookingStatus = catchAsync(async (req, res) => {
 });
 
 
+const getMyServices = catchAsync(async (req, res) => {
+    const userId = req.users?.id as string;
+    const result = await TechnicianService.getMyServices(userId);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Technician bookings retrieved successfully",
+        data: result,
+    });
+});
+
+const getMyAvailability = catchAsync(async (req, res) => {
+    const userId = req.users?.id as string;
+    const result = await TechnicianService.getMyAvailability(userId);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Technician bookings retrieved successfully",
+        data: result,
+    });
+});
+
+const getDashboardOverview = catchAsync(async (req, res) => {
+    const userId = req.users?.id as string;
+    const result = await TechnicianService.getDashboardOverview(userId);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Technician bookings retrieved successfully",
+        data: result,
+    });
+});
+
 export const TechnicianController = {
     createTechnician,
     getAllTechnicians,
@@ -115,4 +148,7 @@ export const TechnicianController = {
     getMyBookings,
     updateBookingStatus,
     updateAvailability,
+    getMyServices,
+    getMyAvailability,
+    getDashboardOverview
 };

@@ -1,3 +1,5 @@
+import { NextFunction, Request, Response } from "express"
+import httpStatus from "http-status";
 import { BookingServices } from "./booking.service";
 import { catchAsync } from "../../utils/catch-async";
 import { sendResponse } from "../../utils/send-response";
@@ -46,8 +48,23 @@ const getBookingDetails = catchAsync(async (req, res) => {
     });
 });
 
+const getCustomerOverview = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const result = await BookingServices.getOverviewCustomer(
+            req.users?.id as string,
+        );
+
+        sendResponse(res, {
+            success: true,
+            statusCode: 200,
+            message: "Bookings retrieved successfully",
+            data: result,
+        });
+    }
+);
 export const BookingControllers = {
     createBooking,
     getMyBookings,
     getBookingDetails,
+    getCustomerOverview
 };

@@ -42,7 +42,7 @@ const createBooking = async (
 
     return booking;
 };
-
+// Bookings Customer
 const getMyBookings = async (customerId: string) => {
     return prisma.booking.findMany({
         where: {
@@ -72,7 +72,6 @@ const getBookingDetails = async (
             id: bookingId,
             customerId,
         },
-
         include: {
             customer: true,
             technician: true,
@@ -82,9 +81,63 @@ const getBookingDetails = async (
         },
     });
 };
+const getOverviewCustomer = async (customerId: string) => {
+    const [
+        totalBookings,
+        requestedBookings,
+        acceptedBookings,
+        completedBookings,
+        recentBookings,
+    ] = await Promise.all([
+        prisma.booking.count({
+            where: {
+                customerId,
+            },
+        }),
 
+        prisma.booking.count({
+            where: {
+                customerId,
+                status: "REQUESTED",
+            },
+        }),
+
+        prisma.booking.count({
+            where: {
+                customerId,
+                status: "ACCEPTED",
+            },
+        }),
+
+        prisma.booking.count({
+            where: {
+                customerId,
+                status: "COMPLETED",
+            },
+        }),
+
+        prisma.booking.findMany({
+            where: {
+                customerId,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: 5,
+        }),
+    ]);
+
+    return {
+        totalBookings,
+        requestedBookings,
+        acceptedBookings,
+        completedBookings,
+        recentBookings,
+    };
+};
 export const BookingServices = {
     createBooking,
     getMyBookings,
     getBookingDetails,
+    getOverviewCustomer
 };

@@ -1030,6 +1030,214 @@ var updateBookingStatus = async (userId, bookingId, payload) => {
   });
   return result;
 };
+var getMyServices = async (userId) => {
+  const technician = await prisma.technicianProfile.findUniqueOrThrow({
+    where: {
+      userId
+    }
+  });
+  if (!technician) {
+    throw new Error("Technician profile not found");
+  }
+  return prisma.service.findMany({
+    where: {
+      technicianId: technician.id
+    },
+    include: {
+      category: true,
+      technician: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+};
+var getMyAvailability = async (userId) => {
+  const technician = await prisma.technicianProfile.findUniqueOrThrow({
+    where: {
+      userId
+    }
+  });
+  if (!technician) {
+    throw new Error("Technician profile not found");
+  }
+  return prisma.availabilitySlot.findMany({
+    where: {
+      technicianId: technician.id
+    },
+    include: {
+      technician: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+};
+var getDashboardOverview = async (userId) => {
+  const technician = await prisma.technicianProfile.findUniqueOrThrow({
+    where: {
+      userId
+    }
+  });
+  const technicianId = technician.id;
+  const now = /* @__PURE__ */ new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  const startOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  );
+  const [
+    totalBookings,
+    bookingsThisMonth,
+    pendingRequests,
+    todaysJobs,
+    completedJobs,
+    reviews,
+    upcomingJobs,
+    recentBookings,
+    totalEarnings
+  ] = await Promise.all([
+    // Total Bookings
+    prisma.booking.count({
+      where: {
+        technicianId
+      }
+    }),
+    // Bookings created this month
+    prisma.booking.count({
+      where: {
+        technicianId,
+        createdAt: {
+          gte: startOfMonth
+        }
+      }
+    }),
+    // Pending Requests
+    prisma.booking.count({
+      where: {
+        technicianId,
+        status: "REQUESTED"
+      }
+    }),
+    // Today's Jobs
+    prisma.booking.count({
+      where: {
+        technicianId,
+        bookingDate: {
+          gte: startOfToday,
+          lte: endOfToday
+        },
+        status: {
+          in: [
+            "ACCEPTED",
+            "PAID",
+            "IN_PROGRESS"
+          ]
+        }
+      }
+    }),
+    // Completed Jobs
+    prisma.booking.count({
+      where: {
+        technicianId,
+        status: "COMPLETED"
+      }
+    }),
+    // Reviews
+    prisma.review.findMany({
+      where: {
+        booking: {
+          technicianId
+        }
+      },
+      select: {
+        rating: true
+      }
+    }),
+    // Upcoming Jobs
+    prisma.booking.findMany({
+      where: {
+        technicianId,
+        bookingDate: {
+          gt: endOfToday
+        },
+        status: {
+          in: [
+            "ACCEPTED",
+            "PAID",
+            "IN_PROGRESS"
+          ]
+        }
+      },
+      include: {
+        customer: true,
+        service: true
+      },
+      orderBy: {
+        bookingDate: "asc"
+      },
+      take: 5
+    }),
+    // Recent Bookings
+    prisma.booking.findMany({
+      where: {
+        technicianId
+      },
+      include: {
+        customer: true,
+        service: true
+        // review: true,
+        // payments: true,
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 5
+    }),
+    // Total Earnings
+    prisma.payment.aggregate({
+      where: {
+        booking: {
+          technicianId
+        },
+        status: "COMPLETED"
+      },
+      _sum: {
+        amount: true
+      }
+    })
+  ]);
+  const averageRating = reviews.length > 0 ? reviews.reduce(
+    (sum, review) => sum + review.rating,
+    0
+  ) / reviews.length : 0;
+  return {
+    totalBookings,
+    bookingsThisMonth,
+    pendingRequests,
+    todaysJobs,
+    completedJobs,
+    averageRating: Number(averageRating.toFixed(1)),
+    totalReviews: reviews.length,
+    totalEarnings: totalEarnings._sum.amount ?? 0,
+    upcomingJobs,
+    recentBookings
+  };
+};
 var TechnicianService = {
   createTechnician,
   getAllTechnicians,
@@ -1037,7 +1245,10 @@ var TechnicianService = {
   updateProfile,
   getMyBookings,
   updateBookingStatus,
-  updateAvailability
+  updateAvailability,
+  getMyServices,
+  getMyAvailability,
+  getDashboardOverview
 };
 
 // src/modules/technicians/technician.controller.ts
@@ -1128,6 +1339,36 @@ var updateBookingStatus2 = catchAsync(async (req, res) => {
     data: result
   });
 });
+var getMyServices2 = catchAsync(async (req, res) => {
+  const userId = req.users?.id;
+  const result = await TechnicianService.getMyServices(userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus5.OK,
+    message: "Technician bookings retrieved successfully",
+    data: result
+  });
+});
+var getMyAvailability2 = catchAsync(async (req, res) => {
+  const userId = req.users?.id;
+  const result = await TechnicianService.getMyAvailability(userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus5.OK,
+    message: "Technician bookings retrieved successfully",
+    data: result
+  });
+});
+var getDashboardOverview2 = catchAsync(async (req, res) => {
+  const userId = req.users?.id;
+  const result = await TechnicianService.getDashboardOverview(userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus5.OK,
+    message: "Technician bookings retrieved successfully",
+    data: result
+  });
+});
 var TechnicianController = {
   createTechnician: createTechnician2,
   getAllTechnicians: getAllTechnicians2,
@@ -1135,7 +1376,10 @@ var TechnicianController = {
   updateProfile: updateProfile2,
   getMyBookings: getMyBookings2,
   updateBookingStatus: updateBookingStatus2,
-  updateAvailability: updateAvailability2
+  updateAvailability: updateAvailability2,
+  getMyServices: getMyServices2,
+  getMyAvailability: getMyAvailability2,
+  getDashboardOverview: getDashboardOverview2
 };
 
 // src/modules/technicians/technician.route.ts
@@ -1143,6 +1387,9 @@ var router3 = Router3();
 router3.post("/create", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.createTechnician);
 router3.get("/", TechnicianController.getAllTechnicians);
 router3.get("/bookings", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getMyBookings);
+router3.get("/services", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getMyServices);
+router3.get("/availability", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getMyAvailability);
+router3.get("/overview", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getDashboardOverview);
 router3.get("/:id", TechnicianController.getSingleTechnician);
 router3.patch("/bookings/:id", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.updateBookingStatus);
 router3.put("/profile", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.updateProfile);
@@ -1518,7 +1765,7 @@ var getAllTechnicians3 = async (query) => {
     data: technicians
   };
 };
-var getDashboardOverview = async () => {
+var getDashboardOverview3 = async () => {
   const [
     totalUsers,
     totalTechnicians,
@@ -1589,7 +1836,7 @@ var adminService = {
   createCategory,
   getAllService,
   getAllTechnicians: getAllTechnicians3,
-  getDashboardOverview
+  getDashboardOverview: getDashboardOverview3
 };
 
 // src/modules/admin/ admin.controller.ts
@@ -1659,7 +1906,7 @@ var getAllTechnicians4 = catchAsync(async (req, res, next) => {
     data: result
   });
 });
-var getDashboardOverview2 = catchAsync(async (req, res) => {
+var getDashboardOverview4 = catchAsync(async (req, res) => {
   const result = await adminService.getDashboardOverview();
   sendResponse(res, {
     statusCode: httpStatus6.OK,
@@ -1676,7 +1923,7 @@ var AdminController = {
   createCategory: createCategory2,
   getAllServices,
   getAllTechnicians: getAllTechnicians4,
-  getDashboardOverview: getDashboardOverview2
+  getDashboardOverview: getDashboardOverview4
 };
 
 // src/modules/admin/admin.route.ts
@@ -1783,10 +2030,60 @@ var getBookingDetails = async (bookingId, customerId) => {
     }
   });
 };
+var getOverviewCustomer = async (customerId) => {
+  const [
+    totalBookings,
+    requestedBookings,
+    acceptedBookings,
+    completedBookings,
+    recentBookings
+  ] = await Promise.all([
+    prisma.booking.count({
+      where: {
+        customerId
+      }
+    }),
+    prisma.booking.count({
+      where: {
+        customerId,
+        status: "REQUESTED"
+      }
+    }),
+    prisma.booking.count({
+      where: {
+        customerId,
+        status: "ACCEPTED"
+      }
+    }),
+    prisma.booking.count({
+      where: {
+        customerId,
+        status: "COMPLETED"
+      }
+    }),
+    prisma.booking.findMany({
+      where: {
+        customerId
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 5
+    })
+  ]);
+  return {
+    totalBookings,
+    requestedBookings,
+    acceptedBookings,
+    completedBookings,
+    recentBookings
+  };
+};
 var BookingServices = {
   createBooking,
   getMyBookings: getMyBookings3,
-  getBookingDetails
+  getBookingDetails,
+  getOverviewCustomer
 };
 
 // src/modules/booking/booking.controller.ts
@@ -1825,16 +2122,31 @@ var getBookingDetails2 = catchAsync(async (req, res) => {
     data: result
   });
 });
+var getCustomerOverview = catchAsync(
+  async (req, res, next) => {
+    const result = await BookingServices.getOverviewCustomer(
+      req.users?.id
+    );
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "Bookings retrieved successfully",
+      data: result
+    });
+  }
+);
 var BookingControllers = {
   createBooking: createBooking2,
   getMyBookings: getMyBookings4,
-  getBookingDetails: getBookingDetails2
+  getBookingDetails: getBookingDetails2,
+  getCustomerOverview
 };
 
 // src/modules/booking/booking.route.ts
 var router5 = express.Router();
 router5.post("/", auth(UserRole.ADMIN, UserRole.CUSTOMER), BookingControllers.createBooking);
 router5.get("/", auth(UserRole.ADMIN, UserRole.CUSTOMER), BookingControllers.getMyBookings);
+router5.get("/overview", auth(UserRole.CUSTOMER), BookingControllers.getCustomerOverview);
 router5.get("/:id", auth(UserRole.ADMIN, UserRole.CUSTOMER), BookingControllers.getBookingDetails);
 var BookingRoutes = router5;
 
