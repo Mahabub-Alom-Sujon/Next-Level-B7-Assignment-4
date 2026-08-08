@@ -350,7 +350,7 @@ const getPayments = async (customerId: string) => {
 
 };
 
-const getPayment = async (
+const getPaymentSingle = async (
     customerId: string,
     paymentId: string
 ) => {
@@ -374,5 +374,5 @@ export const PaymentService = {
     handleWebhook,
     //confirmPayment,
     getPayments,
-    getPayment,
+    getPaymentSingle,
 };

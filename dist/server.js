@@ -2335,7 +2335,7 @@ var getPayments = async (customerId) => {
     }
   });
 };
-var getPayment = async (customerId, paymentId) => {
+var getPaymentSingle = async (customerId, paymentId) => {
   return prisma.payment.findFirstOrThrow({
     where: {
       id: paymentId,
@@ -2353,7 +2353,7 @@ var PaymentService = {
   handleWebhook,
   //confirmPayment,
   getPayments,
-  getPayment
+  getPaymentSingle
 };
 
 // src/modules/payment/payment.controller.ts
@@ -2394,8 +2394,8 @@ var getPayments2 = catchAsync(async (req, res) => {
     data: result
   });
 });
-var getPayment2 = catchAsync(async (req, res) => {
-  const result = await PaymentService.getPayment(
+var getPaymentSingle2 = catchAsync(async (req, res) => {
+  const result = await PaymentService.getPaymentSingle(
     req.users.id,
     req.params.id
   );
@@ -2411,7 +2411,7 @@ var PaymentController = {
   handleWebhook: handleWebhook2,
   //confirmPayment,
   getPayments: getPayments2,
-  getPayment: getPayment2
+  getPaymentSingle: getPaymentSingle2
 };
 
 // src/modules/payment/payment.route.ts
@@ -2423,7 +2423,7 @@ router9.post(
   PaymentController.handleWebhook
 );
 router9.get("/", auth(UserRole.ADMIN, UserRole.CUSTOMER), PaymentController.getPayments);
-router9.get("/:id", auth(UserRole.ADMIN, UserRole.CUSTOMER), PaymentController.getPayment);
+router9.get("/:id", auth(UserRole.ADMIN, UserRole.CUSTOMER), PaymentController.getPaymentSingle);
 var PaymentRoutes = router9;
 
 // src/app.ts

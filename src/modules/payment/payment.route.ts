@@ -14,7 +14,7 @@ router.post("/webhook",
 
 router.get("/", auth(UserRole.ADMIN,UserRole.CUSTOMER), PaymentController.getPayments);
 
-router.get("/:id", auth(UserRole.ADMIN,UserRole.CUSTOMER), PaymentController.getPayment);
+router.get("/:id", auth(UserRole.ADMIN,UserRole.CUSTOMER), PaymentController.getPaymentSingle);
 
 
 

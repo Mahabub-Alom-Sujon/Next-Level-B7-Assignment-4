@@ -64,9 +64,9 @@ const getPayments = catchAsync(async (req, res) => {
 
 });
 
-const getPayment = catchAsync(async (req, res) => {
+const getPaymentSingle = catchAsync(async (req, res) => {
 
-    const result = await PaymentService.getPayment(
+    const result = await PaymentService.getPaymentSingle(
         req.users!.id,
         req.params.id as string,
     );
@@ -85,5 +85,5 @@ export const PaymentController = {
     handleWebhook,
     //confirmPayment,
     getPayments,
-    getPayment,
+    getPaymentSingle,
 };
