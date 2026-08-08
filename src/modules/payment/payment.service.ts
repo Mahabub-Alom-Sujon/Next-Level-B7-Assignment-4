@@ -51,7 +51,10 @@ const createPayment = async (
                 price_data: {
                     currency: "bdt",
                     unit_amount: Math.round(Number(booking.service.price) * 100),
-                    product: process.env.STRIPE_PRODUCT_ID!,
+                    // product: process.env.STRIPE_PRODUCT_ID!,
+                    product_data: {
+                        name: booking.service.title,
+                    },
                 },
                 quantity: 1,
             },
