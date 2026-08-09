@@ -394,6 +394,43 @@ const getMyBookings = async (userId: string) => {
         },
     });
 };
+const getBookingById = async (
+    userId: string,
+    bookingId: string
+) => {
+    const technician = await prisma.technicianProfile.findUniqueOrThrow({
+        where: {
+            userId,
+        },
+    });
+    if (!technician) {
+        throw new Error("Technician profile not found");
+    }
+    const booking = await prisma.booking.findFirst({
+        where: {
+            id: bookingId,
+
+            // Important:
+            // Only allow the assigned technician
+            // to access this booking.
+            technicianId: technician.id,
+        },
+        include: {
+            customer: true,
+            service: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    price: true,
+                    duration: true,
+                },
+            },
+        },
+    });
+
+    return booking;
+};
 const updateBookingStatus = async (
     userId: string,
     bookingId: string,
@@ -683,5 +720,6 @@ export const TechnicianService = {
     updateAvailability,
     getMyServices,
     getMyAvailability,
-    getDashboardOverview
+    getDashboardOverview,
+    getBookingById
 };

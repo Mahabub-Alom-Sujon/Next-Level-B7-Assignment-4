@@ -997,6 +997,46 @@ var getMyBookings = async (userId) => {
     }
   });
 };
+var getBookingById = async (userId, bookingId) => {
+  const technician = await prisma.technicianProfile.findUniqueOrThrow({
+    where: {
+      userId
+    }
+  });
+  if (!technician) {
+    throw new Error("Technician profile not found");
+  }
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      // Important:
+      // Only allow the assigned technician
+      // to access this booking.
+      technicianId: technician.id
+    },
+    include: {
+      customer: true,
+      service: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          duration: true
+        }
+      }
+      // customer: {
+      //     select: {
+      //         id: true,
+      //         name: true,
+      //         email: true,
+      //         phone: true,
+      //     },
+      // },
+    }
+  });
+  return booking;
+};
 var updateBookingStatus = async (userId, bookingId, payload) => {
   const technician = await prisma.technicianProfile.findUniqueOrThrow({
     where: {
@@ -1248,7 +1288,8 @@ var TechnicianService = {
   updateAvailability,
   getMyServices,
   getMyAvailability,
-  getDashboardOverview
+  getDashboardOverview,
+  getBookingById
 };
 
 // src/modules/technicians/technician.controller.ts
@@ -1326,6 +1367,18 @@ var getMyBookings2 = catchAsync(async (req, res) => {
     data: result
   });
 });
+var getBookingById2 = catchAsync(async (req, res) => {
+  const result = await TechnicianService.getBookingById(
+    req.users?.id,
+    req.params.id
+  );
+  sendResponse(res, {
+    statusCode: httpStatus5.OK,
+    success: true,
+    message: "Technician booking fetched successfully",
+    data: result
+  });
+});
 var updateBookingStatus2 = catchAsync(async (req, res) => {
   const result = await TechnicianService.updateBookingStatus(
     req.users?.id,
@@ -1379,7 +1432,8 @@ var TechnicianController = {
   updateAvailability: updateAvailability2,
   getMyServices: getMyServices2,
   getMyAvailability: getMyAvailability2,
-  getDashboardOverview: getDashboardOverview2
+  getDashboardOverview: getDashboardOverview2,
+  getBookingById: getBookingById2
 };
 
 // src/modules/technicians/technician.route.ts
@@ -1391,6 +1445,7 @@ router3.get("/services", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianCo
 router3.get("/availability", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getMyAvailability);
 router3.get("/overview", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getDashboardOverview);
 router3.get("/:id", TechnicianController.getSingleTechnician);
+router3.get("/bookings/:id", auth(UserRole.TECHNICIAN), TechnicianController.getBookingById);
 router3.patch("/bookings/:id", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.updateBookingStatus);
 router3.put("/profile", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.updateProfile);
 router3.put("/availability", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.updateAvailability);

@@ -12,6 +12,7 @@ router.get("/services", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianCont
 router.get("/availability", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.getMyAvailability);
 router.get("/overview", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.getDashboardOverview);
 router.get("/:id", TechnicianController.getSingleTechnician);
+router.get("/bookings/:id", auth(UserRole.TECHNICIAN), TechnicianController.getBookingById);
 router.patch("/bookings/:id", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.updateBookingStatus);
 router.put("/profile", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.updateProfile);
 router.put("/availability", auth(UserRole.ADMIN,UserRole.TECHNICIAN), TechnicianController.updateAvailability);

@@ -91,6 +91,20 @@ const getMyBookings = catchAsync(async (req, res) => {
     });
 });
 
+const getBookingById = catchAsync(async (req, res) => {
+    const result = await TechnicianService.getBookingById(
+        req.users?.id as string,
+        req.params.id as string,
+    );
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Technician booking fetched successfully",
+        data: result,
+    });
+});
+
 const updateBookingStatus = catchAsync(async (req, res) => {
     const result = await TechnicianService.updateBookingStatus(
         req.users?.id as string,
@@ -150,5 +164,6 @@ export const TechnicianController = {
     updateAvailability,
     getMyServices,
     getMyAvailability,
-    getDashboardOverview
+    getDashboardOverview,
+    getBookingById
 };
