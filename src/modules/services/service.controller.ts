@@ -26,6 +26,15 @@ const getAllServices = catchAsync(async (req: Request, res: Response, next: Next
     });
 });
 
+const getFeaturedServices = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ServiceServices.getFeaturedServices();
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Featured services retrieved successfully",
+        data: result,
+    });
+});
 const getSingleServiceById = catchAsync(async(req: Request, res: Response, next: NextFunction)=>{
 
     const serviceId = req.params.id;
@@ -40,6 +49,7 @@ const getSingleServiceById = catchAsync(async(req: Request, res: Response, next:
 
 export const ServiceControllers = {
     createService,
+    getFeaturedServices,
     getSingleServiceById,
     getAllServices,
 };

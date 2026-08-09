@@ -997,6 +997,29 @@ var getMyBookings = async (userId) => {
     }
   });
 };
+var getTopRatedTechnicians = async () => {
+  const technicians = await prisma.technicianProfile.findMany({
+    where: {
+      averageRating: {
+        gt: 0
+      }
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profileImage: true
+        }
+      }
+    },
+    orderBy: {
+      averageRating: "desc"
+    }
+  });
+  return technicians;
+};
 var getBookingById = async (userId, bookingId) => {
   const technician = await prisma.technicianProfile.findUniqueOrThrow({
     where: {
@@ -1025,14 +1048,6 @@ var getBookingById = async (userId, bookingId) => {
           duration: true
         }
       }
-      // customer: {
-      //     select: {
-      //         id: true,
-      //         name: true,
-      //         email: true,
-      //         phone: true,
-      //     },
-      // },
     }
   });
   return booking;
@@ -1281,6 +1296,7 @@ var getDashboardOverview = async (userId) => {
 var TechnicianService = {
   createTechnician,
   getAllTechnicians,
+  getTopRatedTechnicians,
   getSingleTechnician,
   updateProfile,
   getMyBookings,
@@ -1311,6 +1327,15 @@ var createTechnician2 = catchAsync(
 );
 var getAllTechnicians2 = catchAsync(async (req, res) => {
   const result = await TechnicianService.getAllTechnicians(req.query);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus5.OK,
+    message: "Technicians retrieved successfully",
+    data: result
+  });
+});
+var getTopRatedTechnicians2 = catchAsync(async (req, res) => {
+  const result = await TechnicianService.getTopRatedTechnicians();
   sendResponse(res, {
     success: true,
     statusCode: httpStatus5.OK,
@@ -1426,6 +1451,7 @@ var TechnicianController = {
   createTechnician: createTechnician2,
   getAllTechnicians: getAllTechnicians2,
   getSingleTechnician: getSingleTechnician2,
+  getTopRatedTechnicians: getTopRatedTechnicians2,
   updateProfile: updateProfile2,
   getMyBookings: getMyBookings2,
   updateBookingStatus: updateBookingStatus2,
@@ -1444,6 +1470,7 @@ router3.get("/bookings", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianCo
 router3.get("/services", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getMyServices);
 router3.get("/availability", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getMyAvailability);
 router3.get("/overview", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.getDashboardOverview);
+router3.get("/top-rated", TechnicianController.getTopRatedTechnicians);
 router3.get("/:id", TechnicianController.getSingleTechnician);
 router3.get("/bookings/:id", auth(UserRole.TECHNICIAN), TechnicianController.getBookingById);
 router3.patch("/bookings/:id", auth(UserRole.ADMIN, UserRole.TECHNICIAN), TechnicianController.updateBookingStatus);
@@ -2391,9 +2418,21 @@ var getSingleService = async (serviceId) => {
   });
   return getSingleService2;
 };
+var getFeaturedServices = async () => {
+  const services = await prisma.service.findMany({
+    where: {
+      featured: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+  return services;
+};
 var ServiceServices = {
   createService,
   getAllServices: getAllServices2,
+  getFeaturedServices,
   getSingleService
 };
 
@@ -2417,6 +2456,15 @@ var getAllServices3 = catchAsync(async (req, res, next) => {
     data: result
   });
 });
+var getFeaturedServices2 = catchAsync(async (req, res, next) => {
+  const result = await ServiceServices.getFeaturedServices();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus7.OK,
+    message: "Featured services retrieved successfully",
+    data: result
+  });
+});
 var getSingleServiceById = catchAsync(async (req, res, next) => {
   const serviceId = req.params.id;
   const getServiceDetails = await ServiceServices.getSingleService(serviceId);
@@ -2429,6 +2477,7 @@ var getSingleServiceById = catchAsync(async (req, res, next) => {
 });
 var ServiceControllers = {
   createService: createService2,
+  getFeaturedServices: getFeaturedServices2,
   getSingleServiceById,
   getAllServices: getAllServices3
 };
@@ -2437,6 +2486,7 @@ var ServiceControllers = {
 var router6 = Router5();
 router6.post("/", auth(UserRole.ADMIN), ServiceControllers.createService);
 router6.get("/", ServiceControllers.getAllServices);
+router6.get("/featured", ServiceControllers.getFeaturedServices);
 router6.get("/:id", ServiceControllers.getSingleServiceById);
 var ServiceRoutes = router6;
 

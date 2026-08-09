@@ -394,6 +394,32 @@ const getMyBookings = async (userId: string) => {
         },
     });
 };
+
+export const getTopRatedTechnicians = async () => {
+    const technicians = await prisma.technicianProfile.findMany({
+        where: {
+            averageRating: {
+                gt: 0,
+            },
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    profileImage: true,
+                },
+            },
+        },
+        orderBy: {
+            averageRating: "desc",
+        },
+    });
+
+    return technicians;
+};
+
 const getBookingById = async (
     userId: string,
     bookingId: string
@@ -713,6 +739,7 @@ const getDashboardOverview = async (userId: string) => {
 export const TechnicianService = {
     createTechnician,
     getAllTechnicians,
+    getTopRatedTechnicians,
     getSingleTechnician,
     updateProfile,
     getMyBookings,

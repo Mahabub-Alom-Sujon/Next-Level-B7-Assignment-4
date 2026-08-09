@@ -222,8 +222,22 @@ const getSingleService = async (serviceId: string) => {
     return getSingleService;
 };
 
+const getFeaturedServices = async () => {
+    const services = await prisma.service.findMany({
+        where: {
+            featured: true,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+
+    return services;
+};
+
 export const ServiceServices = {
     createService,
     getAllServices,
+    getFeaturedServices,
     getSingleService
 };

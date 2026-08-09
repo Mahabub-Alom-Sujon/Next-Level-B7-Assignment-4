@@ -35,6 +35,16 @@ const getAllTechnicians = catchAsync(async (req, res) => {
     });
 });
 
+const getTopRatedTechnicians = catchAsync(async (req, res) => {
+    const result = await TechnicianService.getTopRatedTechnicians();
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Technicians retrieved successfully",
+        data: result,
+    });
+});
+
 const updateAvailability = catchAsync(
     async (req: Request, res: Response) => {
         const id = req.users?.id as string;
@@ -158,6 +168,7 @@ export const TechnicianController = {
     createTechnician,
     getAllTechnicians,
     getSingleTechnician,
+    getTopRatedTechnicians,
     updateProfile,
     getMyBookings,
     updateBookingStatus,
