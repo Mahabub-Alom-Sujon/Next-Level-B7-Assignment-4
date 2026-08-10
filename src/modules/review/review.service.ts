@@ -72,6 +72,25 @@ const createReview = async (
     return review;
 };
 
+const getMyReviews = async (customerId: string) => {
+    return prisma.review.findMany({
+        where: {
+            customerId,
+        },
+
+        include: {
+            booking:true,
+            customer:true,
+            technician: true,
+        },
+
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+};
+
 export const ReviewServices = {
     createReview,
+    getMyReviews
 };

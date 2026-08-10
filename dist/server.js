@@ -2594,8 +2594,24 @@ var createReview = async (customerId, payload) => {
   });
   return review;
 };
+var getMyReviews = async (customerId) => {
+  return prisma.review.findMany({
+    where: {
+      customerId
+    },
+    include: {
+      booking: true,
+      customer: true,
+      technician: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+};
 var ReviewServices = {
-  createReview
+  createReview,
+  getMyReviews
 };
 
 // src/modules/review/review.controller.ts
@@ -2611,13 +2627,26 @@ var createReview2 = catchAsync(async (req, res) => {
     data: result
   });
 });
+var getMyReviews2 = catchAsync(async (req, res) => {
+  const result = await ReviewServices.getMyReviews(
+    req.users?.id
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Review retrieved successfully",
+    data: result
+  });
+});
 var ReviewControllers = {
-  createReview: createReview2
+  createReview: createReview2,
+  getMyReviews: getMyReviews2
 };
 
 // src/modules/review/review.route.ts
 var router8 = Router7();
-router8.post("/", auth(UserRole.CUSTOMER), ReviewControllers.createReview);
+router8.post("/", auth(UserRole.CUSTOMER, UserRole.ADMIN), ReviewControllers.createReview);
+router8.get("/", auth(UserRole.CUSTOMER, UserRole.ADMIN), ReviewControllers.getMyReviews);
 var ReviewRoutes = router8;
 
 // src/modules/payment/payment.route.ts
