@@ -2423,6 +2423,19 @@ var getFeaturedServices = async () => {
     where: {
       featured: true
     },
+    include: {
+      category: true,
+      technician: {
+        include: {
+          user: true
+        }
+      },
+      bookings: {
+        include: {
+          review: true
+        }
+      }
+    },
     orderBy: {
       createdAt: "desc"
     }
